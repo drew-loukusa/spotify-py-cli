@@ -1,0 +1,50 @@
+Just rough drafting a doc to get a better feel for what I actually want to be making here. 
+
+It's going to be a CLI based application for creating, editing, and deleting Spotify playlists.
+
+Spotipy (the wrapper around the spotify API) should make a lot of my features fairly easy to implement.
+If this is the case, I should put more of my focus into trying to use TDD to do the development of this project.
+
+I can invest more energy into getting accustomed to that development style.
+
+Anyways, high level features:
+
+* Users should be able to login/verify their identity. This is a base req for all other features (duh)
+* Users should be able to create new playlists
+* Users should be able to delete created playlists 
+* Users should be able to edit created playlists 
+
+A small map:
+
+    Local CLI -> My app (hosted in Azure or AWS) -> Spotify API 
+
+Because you have to create a secret, unless you want to force each user to create their own secret + client app, then splitting the CLI up into 
+a local CLI app which talks to a server would make more sense.
+
+However, I'm probably not going to do that. If you're using a CLI app, you can get your own secrets.
+
+Getting more granular:
+
+* Each high level feature will be associated with a flag
+* Each high level feature flag can be run with or without providing a playlist name 
+    * If no name is provided, the app should ask for one 
+        * If the name provided does not match any exisiting playlists, the app should attempt to find playlists with similar names
+            * This behavior should be toggleable with a sub flag (I.E. do not search for similarly named lists if provided name does not match any existing lists)
+            * How many lists are returned after searching can be changed as well with a flag 
+                > Return N lists (use flag with number)
+                > Return ALL user playlists (use flag with no number)
+
+    * CREATE command:
+        * If create new command is provided a name that already exists, return an error to the user 
+            > This behavior can be overidden with a flag 
+                * A sort of FORCE create the list. This would flag would cause the app to delete the existing list with said name, and then create a new playlist 
+                    * This will not be teh default behavior for obvious reasons
+
+    * DELETE command:
+        > Should prompt user before deleting ("are you sure you want to delete list X?")
+            * This behavior can be overidden with a flag   
+                > Force delete with out prompting user (only display text to screen if error occured)
+
+* Some commands will send output to screen if errors occur, allow these errors to be suppresed with a flag (--silent , or something like that)
+
+
