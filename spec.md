@@ -43,7 +43,7 @@ Having a spec allows me to write tests before writing code as I am using TDD for
             * Should display an error if delete was unsuccessful
 
 * LIST/SEARCH command:
-    * Should have TWO flags (--list --search) ?
+    * Has two names (LIST and SEARCH) ?
     * If provided NO NAME, should list all playlists of the user 
     * (?) Should allow with subflags, various ways of filtering the provided lists
     * (?) Should paginate results if number of existing lists is large 
