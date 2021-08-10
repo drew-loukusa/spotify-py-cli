@@ -15,8 +15,10 @@ def create(
     name: str,
     force: bool = typer.Option(False),
 ):
+    # Check if name is already in use 
     pl_id = get_pl_id_from_name(sp, name)
-    name_exists = check_exists(sp, pl_id)
+    name_exists = False if pl_id == '' else True 
+
     if force:
         if name_exists:
             delete_playlist(sp, pl_id)
