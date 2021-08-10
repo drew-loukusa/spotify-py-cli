@@ -1,4 +1,5 @@
 secrets.ps1
+scripts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
