@@ -60,3 +60,9 @@ At least to start out with, this application will require each user to create th
 This is simpler than the alternative, which is to split the app into a local CLI app which talks to a server. This method would allow a single secret to be used (for the server) and the local cli that each user downloads simply talks to the server. 
 
 This method is obviously more work, and would require me to code two applications. Maybe once I'm done with the first prototype, maybe.
+
+
+## Notes on testing
+
+I'm going to create a "dummy api"/stubbed api that I can hit so that my tests are just testing my application logic.
+I don't want to have my tests reliant on spotify not returning a result, don't want to get rate limited, etc. 

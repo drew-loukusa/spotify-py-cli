@@ -2,16 +2,34 @@ import typer
 import spotipy
 from SpotifyUtils import *
 from spotipy.oauth2 import SpotifyOAuth
+from dummy_spotipy import DummySpotipy
 
 scope = "playlist-modify-private playlist-read-private"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-
+sp = DummySpotipy()
+#sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 app = typer.Typer()
 
 
 @app.command()
-def create(name: str):
-    typer.echo(f"(Not Yet Implemented) Playlist '{name}'.")
+def create(
+    name: str,
+    force: bool = typer.Option(False),
+):
+    pl_id = get_pl_id_from_name(sp, name)
+    name_exists = check_exists(sp, pl_id)
+    if force:
+        if name_exists:
+            delete_playlist(sp, pl_id)
+        create_playlist(sp, name)
+        typer.echo(f"Playlist Overwritten with new playlist.")
+    else:
+        if not name_exists:
+            create_playlist(sp, name)
+            typer.echo("Playlist created.")
+        else:
+            typer.echo("Playlist with that name already exists. \
+            Please choose a diffrent name or use '--force' \
+                to overwrite the existing list.")
 
 @app.command()
 def delete(
