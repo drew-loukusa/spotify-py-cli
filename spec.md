@@ -39,8 +39,8 @@ Having a spec allows me to write tests before writing code as I am using TDD for
 * DELETE command:
     * Should prompt user before deleting ("are you sure you want to delete list X?")
         * This behavior can be overidden with a flag: Force delete with out prompting user 
-            * Should display nothing if delete was successful
-            * Should display an error if delete was unsuccessful
+        * Should display "deleted playlist X" if successful
+        * Should display an error if delete was unsuccessful
 
 * LIST/SEARCH command:
     * Has two names (LIST and SEARCH) ?
