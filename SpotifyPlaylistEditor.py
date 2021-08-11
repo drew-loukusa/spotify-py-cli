@@ -34,7 +34,7 @@ def create(
 
     if force:
         if name_exists:
-            pl_id = playlist['id']
+            pl_id = playlist["id"]
             delete_playlist(sp, pl_id)
         create_playlist(sp, name)
         typer.echo(f"Playlist Overwritten with new playlist.")
@@ -59,12 +59,14 @@ def delete(
 ):
     if force:
         playlist = get_playlist(sp, pl_name=name)
-        pl_id = "" if playlist is None else playlist['id']
+        pl_id = "" if playlist is None else playlist["id"]
 
         if playlist is None:
-            typer.echo(f"Playlist '{name}' could not be deleted as it appears to not exist!")
+            typer.echo(
+                f"Playlist '{name}' could not be deleted as it appears to not exist!"
+            )
             exit(1)
-            
+
         delete_playlist(sp, pl_id)
         typer.echo(f"Deleting Playlist: {name}")
     else:

@@ -1,5 +1,6 @@
 import spotipy
 
+
 def create_playlist(sp: spotipy.Spotify, name: str) -> str:
     """Attempts to create a playlist with the given name, returns the playlist id if successful"""
     user_id = sp.me()["id"]
