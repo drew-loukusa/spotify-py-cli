@@ -29,11 +29,12 @@ def create(
     force: bool = typer.Option(False),
 ):
     # Check if name is already in use
-    pl_id = get_pl_id_from_name(sp, name)
-    name_exists = False if pl_id == "" else True
+    playlist = get_playlist(sp, pl_name=name)
+    name_exists = True if playlist != None else False
 
     if force:
         if name_exists:
+            pl_id = playlist['id']
             delete_playlist(sp, pl_id)
         create_playlist(sp, name)
         typer.echo(f"Playlist Overwritten with new playlist.")
@@ -57,7 +58,13 @@ def delete(
     ),
 ):
     if force:
-        pl_id = get_pl_id_from_name(sp, name)
+        playlist = get_playlist(sp, pl_name=name)
+        pl_id = "" if playlist is None else playlist['id']
+
+        if playlist is None:
+            typer.echo(f"Playlist '{name}' could not be deleted as it appears to not exist!")
+            exit(1)
+            
         delete_playlist(sp, pl_id)
         typer.echo(f"Deleting Playlist: {name}")
     else:
@@ -73,6 +80,7 @@ def search(name: str = typer.Argument("")):
         playlist = get_playlist(sp, name)
         if playlist is None:
             typer.echo(f"Could not find {name} in user's playlists.")
+            exit(1)
         else:
             typer.echo(f"Found playlist {name}.")
 
