@@ -1,3 +1,4 @@
+import os 
 import typer 
 import spotipy
 from SpotifyUtils import *
@@ -5,8 +6,11 @@ from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
 
 scope = "playlist-modify-private playlist-read-private"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-sp = DummySpotipy()
+USE_DUMMY_WRAPPER = os.getenv('USE_DUMMY_WRAPPER')
+sp = (
+    DummySpotipy() if USE_DUMMY_WRAPPER == 'True'
+    else spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+)
 app = typer.Typer()
 
 @app.callback()
