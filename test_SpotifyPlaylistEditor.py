@@ -1,5 +1,3 @@
-import os
-import sys
 from time import sleep
 
 from SpotifyUtils import *

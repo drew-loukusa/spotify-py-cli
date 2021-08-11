@@ -1,8 +1,8 @@
 if ($args.Count -gt 0){
-    $env:USE_DUMMY_WRAPPER='True'
+    $env:USE_DUMMY_WRAPPER='False'
 }
 else{
-    $env:USE_DUMMY_WRAPPER='False'
+    $env:USE_DUMMY_WRAPPER='True'
 }
 pytest.exe
 
