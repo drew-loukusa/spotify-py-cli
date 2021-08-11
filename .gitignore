@@ -1,4 +1,5 @@
 secrets.ps1
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

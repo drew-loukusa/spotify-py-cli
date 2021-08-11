@@ -1,17 +1,19 @@
-import os 
-import typer 
+import os
+import typer
 import spotipy
 from SpotifyUtils import *
 from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
 
 scope = "playlist-modify-private playlist-read-private"
-USE_DUMMY_WRAPPER = os.getenv('USE_DUMMY_WRAPPER')
+USE_DUMMY_WRAPPER = os.getenv("USE_DUMMY_WRAPPER")
 sp = (
-    DummySpotipy() if USE_DUMMY_WRAPPER == 'True'
+    DummySpotipy()
+    if USE_DUMMY_WRAPPER == "True"
     else spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 )
 app = typer.Typer()
+
 
 @app.callback()
 def callback():
@@ -20,14 +22,15 @@ def callback():
     It's not very good yet, so please be patient.
     """
 
+
 @app.command()
 def create(
     name: str,
     force: bool = typer.Option(False),
 ):
-    # Check if name is already in use 
+    # Check if name is already in use
     pl_id = get_pl_id_from_name(sp, name)
-    name_exists = False if pl_id == '' else True 
+    name_exists = False if pl_id == "" else True
 
     if force:
         if name_exists:
@@ -39,14 +42,19 @@ def create(
             create_playlist(sp, name)
             typer.echo("Playlist created.")
         else:
-            typer.echo("Playlist with that name already exists. \
+            typer.echo(
+                "Playlist with that name already exists. \
             Please choose a diffrent name or use '--force' \
-                to overwrite the existing list.")
+                to overwrite the existing list."
+            )
+
 
 @app.command()
 def delete(
     name: str,
-    force: bool = typer.Option(..., prompt=f"Are you sure you want to delete the playlist?"),
+    force: bool = typer.Option(
+        ..., prompt=f"Are you sure you want to delete the playlist?"
+    ),
 ):
     if force:
         pl_id = get_pl_id_from_name(sp, name)
@@ -55,10 +63,9 @@ def delete(
     else:
         typer.echo("Operation cancelled")
 
+
 @app.command()
-def search(
-    name: str = typer.Argument("")
-):
+def search(name: str = typer.Argument("")):
     if name == "":
         typer.echo("No name provided, listing all playlists...")
         list_playlists(sp)
