@@ -18,7 +18,7 @@ def delete_playlist(sp, pl_id):
 # However, how many users are going to have > 100 playlists?
 # Not many. And even the outliers probably have < 1000 playlists.
 # Search in a linear fashion through < 1000 vaules is easy for a computer.
-# Might improve this at some point, but for now it's fine.
+# Might improve this at some point, but for now it's fine. TODO maybe.
 def check_exists(sp, pl_id):
     user_id = sp.me()['id']
     playlists = sp.user_playlists(user_id)
