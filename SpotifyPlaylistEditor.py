@@ -69,16 +69,14 @@ def delete(
         help="If multiple lists are found, delete all. Only has effect if used with --no-prompt.",
     ),
 ):
-    if name == "" and id == "": 
+    if name == "" and id == "":
         typer.echo("You must specify NAME or ID")
         exit(1)
 
     # person_name = typer.prompt("What's your name?")
     if no_prompt:
         playlists = (
-            get_playlist(sp, pl_id=id) 
-            if id != "" 
-            else get_playlist(sp, pl_name=name)
+            get_playlist(sp, pl_id=id) if id != "" else get_playlist(sp, pl_name=name)
         )
         if playlists is None:
             label = f"with name: '{name}'" if id == "" else f"with id: '{id}'"
@@ -87,7 +85,7 @@ def delete(
             )
             exit(1)
 
-        pl_id = None if id == "" else id 
+        pl_id = None if id == "" else id
         if playlists != None and len(playlists) > 0:
             typer.echo(f"Multiple playlists were found with name: {name}")
         elif playlists != None and len(playlists) == 1:

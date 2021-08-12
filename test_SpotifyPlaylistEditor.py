@@ -47,7 +47,6 @@ class TestCreate:
 
 
 class TestDelete:
-
     def test_delete_no_name_or_id(self):
         result = runner.invoke(app, ["delete", "--no-prompt"])
         assert result.exit_code == 1
@@ -85,7 +84,6 @@ class TestDelete:
         assert result.exit_code == 0
         assert f"Deleted playlist: {TEST_PL_NAME} with id {pl_id}" in result.stdout
         assert pl_exists == False
-
 
     def test_delete_no_prompt(self):
         pl_id = create_playlist(sp, TEST_PL_NAME)
@@ -205,6 +203,7 @@ class TestDelete:
             f"Multiple playlists were found with name: {TEST_PL_NAME} and '--no-prompt' was used. Please use '--no-prompt' with '--all' to delete all, run delete without '--no-prompt' to select the list to be deleted, or specfiy with '--id' which playlist to delete."
             in result.stdout
         )
+
 
 # class TestSearch:
 #     def test_search_no_name_provided(self):
