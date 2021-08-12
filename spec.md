@@ -66,3 +66,11 @@ This method is obviously more work, and would require me to code two application
 
 I'm going to create a "dummy api"/stubbed api that I can hit so that my tests are just testing my application logic.
 I don't want to have my tests reliant on spotify not returning a result, don't want to get rate limited, etc. 
+
+## Follow ups
+* SPOTIFY ALLOWS MULTIPLE PLAYLISTS TO SHARE THE SAME NAME
+    * I need to update my app to account for this. This is big.
+
+* I want a way to display info about a playlist
+    * Should I put that functionality under the search command? Or a new one.
+    * TBD

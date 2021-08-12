@@ -20,6 +20,15 @@ def delete_playlist(sp: spotipy.Spotify, pl_id: str) -> None:
     sp.current_user_unfollow_playlist(playlist_id=pl_id)
 
 
+def delete_all(sp: spotipy.Spotify, pl_name: str) -> None:
+    """Attempts to delete all playlists with the same name"""
+    playlists = get_playlist(sp, pl_name=pl_name)
+    if playlists is not None:
+        for playlist in playlists:
+            pl_id, pl_name = playlist["id"], playlist["name"]
+            sp.current_user_unfollow_playlist(playlist_id=pl_id)
+
+
 # I'd assume there is a better way to do this.
 # However, how many users are going to have > 100 playlists?
 # Not many. And even the outliers probably have < 1000 playlists.
@@ -49,13 +58,16 @@ def get_playlist(sp: spotipy.Spotify, pl_name: str = None, pl_id: str = None) ->
     Attempts to retrieve all info related to a given playlist.
     Accepts playlist name or id as ways of getting the playlist.
     Returns None if playlists does not exit
-    Returns a dict of info if it does exist
+
+    Returns a list of dicts if the playlist exists (or multiple with the
+    same name do).
     """
     user_id = sp.me()["id"]
     playlists = sp.user_playlists(user_id)
+    selected_playlists = []
     for playlist in playlists["items"]:
         name, id = playlist["name"], playlist["id"]
         if (pl_name != None and name.strip() == pl_name.strip()) or id == pl_id:
-            return playlist
+            selected_playlists.append(playlist)
 
-    return None
+    return None if len(selected_playlists) == 0 else selected_playlists
