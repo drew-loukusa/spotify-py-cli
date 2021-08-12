@@ -71,6 +71,23 @@ I don't want to have my tests reliant on spotify not returning a result, don't w
 * SPOTIFY ALLOWS MULTIPLE PLAYLISTS TO SHARE THE SAME NAME
     * I need to update my app to account for this. This is big.
 
+    * I may want to allow playlists to be specfied by ID
+
+    * Things that need to be updated:
+        * create:
+            * With a name clash, force create should just make a new playlist alongside the exist ing one, not delete the existing one.
+
+        * delete:
+            * If multiple lists share the same name, user has to pick which one to delete
+                * If multiple lists are found with name, prompt user? 
+
+            * --force should not (will not?) work if multiple lists share the same name. 
+
+        * Instead of handeling a SINGLE playlist, I'll need to handle a collection of them 
+            * But most of the time, the collection will have a single name
+            * Will need to display more info to user about playlists in order to give them the ability to differentiate. 
+
+
 * I want a way to display info about a playlist
     * Should I put that functionality under the search command? Or a new one.
     * TBD

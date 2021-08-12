@@ -1,4 +1,5 @@
 import os
+from click.termui import confirm
 import typer
 import spotipy
 from SpotifyUtils import *
@@ -38,8 +39,6 @@ def create(
             typer.echo("Playlist with duplicate name created.")
         else:
             typer.echo("Playlist created.")
-        #     pl_id = playlist["id"]
-        #     delete_playlist(sp, pl_id)
 
     else:
         if not name_exists:
@@ -59,40 +58,73 @@ def delete(
     name: str = typer.Argument(""),
     id: str = typer.Option("", help="Use id to specify playlist"),
     no_prompt: bool = typer.Option(
-        ...,
+        False,
         "--no-prompt",
-        help="Do prompt user to confirm delete.",
-        prompt=f"Are you sure you want to delete the playlist?",
+        help="Do not prompt user to confirm deletion. Will be ignored if NAME "
+        + "is supplied and multiple playlists exist with the same name.\n"
+        + "See '--all' for deleting multiple lists that share the same name.",
     ),
     all: bool = typer.Option(
         False,
-        help="If multiple lists are found, delete all. Only has effect if used with --no-prompt.",
+        help="If multiple lists are found that share the same name, delete all. "
+        + "Only has effect if used with --no-prompt.",
     ),
 ):
     if name == "" and id == "":
         typer.echo("You must specify NAME or ID")
         exit(1)
 
-    # person_name = typer.prompt("What's your name?")
-    if no_prompt:
-        playlists = (
-            get_playlist(sp, pl_id=id) if id != "" else get_playlist(sp, pl_name=name)
+    playlists = (
+        get_playlist(sp, pl_id=id) if id != "" else get_playlist(sp, pl_name=name)
+    )
+
+    if id == "" and playlists != None:
+        typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
+        if len(playlists) > 1:
+            for playlist in playlists:
+                pn, pid, = (
+                    playlist["name"],
+                    playlist["id"],
+                )
+                print(f"{pn}, ID: {pid}")
+
+    if playlists != None and len(playlists) > 1 and not (all and no_prompt):
+        typer.echo(
+            f"Multiple playlists were found with name: {name}."
+            + "\nPlease use '--no-prompt' with '--all' to "
+            + "delete all, or specify with '--id' which playlist to delete."
         )
-        if playlists is None:
-            label = f"with name: '{name}'" if id == "" else f"with id: '{id}'"
-            typer.echo(
-                f"Playlist {label} could not be deleted as it appears to not exist!"
-            )
-            exit(1)
+        exit(0)
 
+    label = f"with name: '{name}'" if id == "" else f"with id: '{id}'"
+    if playlists is None:
+        typer.echo(f"Playlist {label} appears to not exist!")
+        typer.echo("Operation cancelled")
+        exit(1)
+
+    confirm_delete = False
+    if not no_prompt:
+        confirm_delete = typer.confirm(
+            text=f"Are you sure you want to delete the playlist {label}?"
+        )
+    else:
+        confirm_delete = True
+
+    if confirm_delete:
+        pl_name = None if name == "" else name
         pl_id = None if id == "" else id
-        if playlists != None and len(playlists) > 0:
-            typer.echo(f"Multiple playlists were found with name: {name}")
-        elif playlists != None and len(playlists) == 1:
+        if playlists != None and len(playlists) == 1:
             pl_id = playlists[0]["id"]
+            pl_name = playlists[0]["name"]
 
-        delete_playlist(sp, pl_id)
-        typer.echo(f"Deleted playlist: {name}")
+        if all:
+            delete_all(sp, pl_name=name)
+            typer.echo(f"Deleted all playlists associated with name: {pl_name}")
+        else:
+            delete_playlist(sp, pl_id)
+            typer.echo(f"Deleted playlist: {pl_name}, ID: {pl_id}")
+        exit(0)
+
     else:
         typer.echo("Operation cancelled")
 
@@ -103,14 +135,19 @@ def search(name: str = typer.Argument("")):
         typer.echo("No name provided, listing all playlists...")
         list_playlists(sp)
     else:
-        playlist = get_playlist(sp, name)
-        if playlist is None:
+        playlists = get_playlist(sp, name)
+        if playlists is None:
             typer.echo(f"Could not find {name} in user's playlists.")
             exit(1)
         else:
-            typer.echo(f"Found playlist {name}.")
+            typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
+            for playlist in playlists:
+                pn, pid, = (
+                    playlist["name"],
+                    playlist["id"],
+                )
+                print(f"{pn}, ID: {pid}")
 
 
 if __name__ == "__main__":
-    create_playlist(sp, "TEST123")
     app()

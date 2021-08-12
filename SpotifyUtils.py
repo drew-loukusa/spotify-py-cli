@@ -1,4 +1,5 @@
 import spotipy
+from typing import List
 
 
 def create_playlist(sp: spotipy.Spotify, name: str) -> str:
@@ -42,18 +43,25 @@ def check_exists(sp: spotipy.Spotify, pl_id: str) -> bool:
     return True if playlist != None else False
 
 
-def get_pl_id(sp: spotipy.Spotify, pl_name: str) -> str:
+def get_pl_id(sp: spotipy.Spotify, pl_name: str) -> List[str]:
     """
-    Gets the id of a playlist given a name.
+    Gets the id of a playlist(s) given a name.
     Returns None if playlist does not exist.
+
+    Returns list of id strings if 1 or more playlists exist with given name.
     """
-    playlist = get_playlist(sp, pl_name=pl_name)
-    if playlist != None:
-        return playlist["id"]
+    id_list = []
+    playlists = get_playlist(sp, pl_name=pl_name)
+    if playlists != None:
+        for pl in playlists:
+            id_list.append(pl["id"])
+        return id_list
     return None
 
 
-def get_playlist(sp: spotipy.Spotify, pl_name: str = None, pl_id: str = None) -> dict:
+def get_playlist(
+    sp: spotipy.Spotify, pl_name: str = None, pl_id: str = None
+) -> List[dict]:
     """
     Attempts to retrieve all info related to a given playlist.
     Accepts playlist name or id as ways of getting the playlist.
