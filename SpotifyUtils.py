@@ -2,10 +2,24 @@ import spotipy
 from typing import List
 
 
-def create_playlist(sp: spotipy.Spotify, name: str) -> str:
+def create_playlist(
+    sp: spotipy.Spotify, name: str, public=False, collaborative=False, description=""
+) -> str:
     """Attempts to create a playlist with the given name, returns the playlist id if successful"""
+
+    # TODO: add support for
+    # public - is the created playlist public
+    # collaborative - is the created playlist collaborative
+    # description - the description of the playlist
+
     user_id = sp.me()["id"]
-    result = sp.user_playlist_create(user_id, name=name, public=False)
+    result = sp.user_playlist_create(
+        user_id,
+        name=name,
+        public=public,
+        collaborative=collaborative,
+        description=description,
+    )
     return result["id"]
 
 

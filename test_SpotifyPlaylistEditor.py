@@ -1,3 +1,4 @@
+from os import name
 from time import sleep
 
 from SpotifyUtils import *
@@ -12,10 +13,12 @@ TEST_PL_NAME = "TEST_PL_NAME"
 class TestCreate:
     def test_create_playlist(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME])
-
+        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = check_exists(sp, pl_id)
         # Clean up
         delete_all(sp, TEST_PL_NAME)
 
+        assert pl_exists == True
         assert result.exit_code == 0
         assert "Playlist created." in result.stdout
 
@@ -39,11 +42,55 @@ class TestCreate:
         create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--force"])
 
+        pl_ids = get_pl_id(sp, TEST_PL_NAME)
+        pl_exists = True
+        for id in pl_ids:
+            pl_exists = check_exists(sp, id)
+
         # Clean up
         delete_all(sp, TEST_PL_NAME)
 
+        assert pl_exists == True
         assert result.exit_code == 0
         assert "Playlist with duplicate name created." in result.stdout
+
+    def test_create_with_description(self):
+        result = runner.invoke(
+            app, ["create", TEST_PL_NAME, "--desc", "A test playlist"]
+        )
+        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = check_exists(sp, pl_id)
+        # Clean up
+        delete_all(sp, TEST_PL_NAME)
+
+        assert pl_exists == True
+        assert result.exit_code == 0
+        assert "Playlist created." in result.stdout
+        assert "Description:" in result.stdout
+
+    def test_create_public(self):
+        result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
+        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = check_exists(sp, pl_id)
+        # Clean up
+        delete_all(sp, TEST_PL_NAME)
+
+        assert pl_exists == True
+        assert result.exit_code == 0
+        assert "Playlist created." in result.stdout
+        assert "Public: True" in result.stdout
+
+    def test_create_collaborative(self):
+        result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
+        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = check_exists(sp, pl_id)
+        # Clean up
+        delete_all(sp, TEST_PL_NAME)
+
+        assert pl_exists == True
+        assert result.exit_code == 0
+        assert "Playlist created." in result.stdout
+        assert "Collaborative: True" in result.stdout
 
 
 class TestDelete:
@@ -265,3 +312,14 @@ class TestSearch:
 
         assert result.exit_code == 0
         assert f"2 playlist(s) found matching name {TEST_PL_NAME}" in result.stdout
+
+
+# Dumb hack for debugging test cases:
+
+# Uncomment this:
+# import os
+
+# Put this at the top of SpotifyPlaylistEditor.py:
+# os.environ['USE_DUMMY_WRAPPER'] = 'True'
+
+# Run test case directly here.

@@ -28,29 +28,51 @@ def callback():
 def create(
     name: str,
     force: bool = typer.Option(False),
+    desc: str = typer.Option("", help="Playlist description."),
+    public: bool = typer.Option(False, help="Is the created playlist public"),
+    collaborative: bool = typer.Option(
+        False, "--collab", help="Is the created playlist collaborative"
+    ),
 ):
+    """
+    Create a new playlist.
+    """
+
+    # TODO: Add support for adding a description, '--desc' maybe
+
     # Check if name is already in use
     playlist = get_playlist(sp, pl_name=name)
     name_exists = True if playlist != None else False
 
-    if force:
-        create_playlist(sp, name)
+    if not name_exists or force:
+        create_playlist(
+            sp,
+            name=name,
+            public=public,
+            collaborative=collaborative,
+            description=desc,
+        )
         if name_exists:
             typer.echo("Playlist with duplicate name created.")
         else:
             typer.echo("Playlist created.")
+        typer.echo(f"Public: {public}")
+        typer.echo(f"Collaborative: {collaborative}")
+        typer.echo(f"Description: {desc}")
 
     else:
-        if not name_exists:
-            create_playlist(sp, name)
-            typer.echo("Playlist created.")
-        else:
-            typer.echo(
-                "A playlist with that name already exists.\n"
-                + "Choose a diffrent name or use '--force'"
-                + "to create a playlist with the same name "
-                + "as the existing playlist."
-            )
+        typer.echo(
+            "A playlist with that name already exists.\n"
+            + "Choose a diffrent name or use '--force'"
+            + "to create a playlist with the same name "
+            + "as the existing playlist."
+        )
+
+
+# TODO: add a "follow" command
+# Use:
+# user_playlist_is_following(playlist_owner_id, playlist_id, user_ids)
+# user_playlist_follow_playlist(playlist_owner_id, playlist_id)
 
 
 @app.command()
@@ -70,16 +92,23 @@ def delete(
         + "Only has effect if used with --no-prompt.",
     ),
 ):
+    """
+    Delete (unfollow) a playlist from your library.
+    """
     if name == "" and id == "":
         typer.echo("You must specify NAME or ID")
         exit(1)
 
+    # Retrieve any playlists matching 'name' or 'id'
     playlists = (
         get_playlist(sp, pl_id=id) if id != "" else get_playlist(sp, pl_name=name)
     )
 
+    # Report how many playlist were found matching 'name' if name was used
     if id == "" and playlists != None:
         typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
+
+        # If there is more than one playlist with the same name, list them out
         if len(playlists) > 1:
             for playlist in playlists:
                 pn, pid, = (
@@ -88,6 +117,7 @@ def delete(
                 )
                 print(f"{pn}, ID: {pid}")
 
+    # Exit if there are duplicate playlist names and the right flags are not present
     if playlists != None and len(playlists) > 1 and not (all and no_prompt):
         typer.echo(
             f"Multiple playlists were found with name: {name}."
@@ -96,12 +126,14 @@ def delete(
         )
         exit(0)
 
+    # Exit if the name or id given does not match any given playlist
     label = f"with name: '{name}'" if id == "" else f"with id: '{id}'"
     if playlists is None:
         typer.echo(f"Playlist {label} appears to not exist!")
         typer.echo("Operation cancelled")
         exit(1)
 
+    # If '--no-prompt' was not used, confirm delete with user
     confirm_delete = False
     if not no_prompt:
         confirm_delete = typer.confirm(
@@ -131,6 +163,10 @@ def delete(
 
 @app.command()
 def search(name: str = typer.Argument("")):
+    """
+    Search through playlists you follow.
+    Don't provide a name and this command will list all playlists you follow.
+    """
     if name == "":
         typer.echo("No name provided, listing all playlists...")
         list_playlists(sp)
@@ -142,11 +178,12 @@ def search(name: str = typer.Argument("")):
         else:
             typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
             for playlist in playlists:
-                pn, pid, = (
+                pn, pid, desc = (
                     playlist["name"],
                     playlist["id"],
+                    playlist["description"],
                 )
-                print(f"{pn}, ID: {pid}")
+                print(f"{pn}, ID: {pid}\nDescription:\n{desc}")
 
 
 if __name__ == "__main__":
