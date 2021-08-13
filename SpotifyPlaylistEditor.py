@@ -26,7 +26,9 @@ def callback():
 @app.command()
 def create(
     name: str,
-    force: bool = typer.Option(False),
+    force: bool = typer.Option(
+        False, help="Create the playlist, even if one already exists with name NAME"
+    ),
     desc: str = typer.Option("", help="Playlist description."),
     public: bool = typer.Option(False, help="Is the created playlist public"),
     collaborative: bool = typer.Option(
@@ -36,8 +38,6 @@ def create(
     """
     Create a new playlist.
     """
-
-    # TODO: Add support for adding a description, '--desc' maybe
 
     # Check if name is already in use
     playlist = get_playlist(sp, pl_name=name)
