@@ -91,3 +91,11 @@ I don't want to have my tests reliant on spotify not returning a result, don't w
 * I want a way to display info about a playlist
     * Should I put that functionality under the search command? Or a new one.
     * TBD
+
+* This is getting out of hand, I need to really update this doc.
+* Anyways
+
+* Add a follow command
+* Other things I'll need
+    * EDIT, I need to add the EDIT command...
+    * Ability to add and remove songs from a playlist
