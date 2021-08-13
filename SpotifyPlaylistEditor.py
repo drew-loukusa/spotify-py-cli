@@ -1,12 +1,11 @@
 import os
-from click.termui import confirm
 import typer
 import spotipy
 from SpotifyUtils import *
 from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
 
-scope = "playlist-modify-private playlist-read-private"
+scope = "playlist-modify-private playlist-read-private playlist-read-collaborative"
 USE_DUMMY_WRAPPER = os.getenv("USE_DUMMY_WRAPPER")
 sp = (
     DummySpotipy()

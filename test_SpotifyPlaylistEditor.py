@@ -85,7 +85,7 @@ class TestCreate:
         pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
         pl_exists = check_exists(sp, pl_id)
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        delete_playlist(sp, pl_id)
 
         assert pl_exists == True
         assert result.exit_code == 0
