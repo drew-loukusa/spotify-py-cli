@@ -1,6 +1,7 @@
 import os
 import typer
 import spotipy
+from AppStrings import *
 from SpotifyUtils import *
 from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
@@ -26,17 +27,13 @@ def callback():
 @app.command()
 def create(
     name: str,
-    force: bool = typer.Option(
-        False, help="Create the playlist, even if one already exists with name NAME"
-    ),
-    desc: str = typer.Option("", help="Playlist description."),
-    public: bool = typer.Option(False, help="Is the created playlist public"),
-    collaborative: bool = typer.Option(
-        False, "--collab", help="Is the created playlist collaborative"
-    ),
+    desc: str = typer.Option("", help=Create.desc_help),
+    public: bool = typer.Option(False, help=Create.public_help),
+    collab: bool = typer.Option(False, "--collab", help=Create.collab_help),
+    force: bool = typer.Option(False, help=Create.force_help),
 ):
     """
-    Create a new playlist.
+    Creates a new playlist.
     """
 
     # Check if name is already in use
@@ -48,24 +45,19 @@ def create(
             sp,
             name=name,
             public=public,
-            collaborative=collaborative,
+            collaborative=collab,
             description=desc,
         )
         if name_exists:
-            typer.echo("Playlist with duplicate name created.")
+            typer.echo(Create.duplicate_created)
         else:
-            typer.echo("Playlist created.")
-        typer.echo(f"Public: {public}")
-        typer.echo(f"Collaborative: {collaborative}")
-        typer.echo(f"Description: {desc}")
+            typer.echo(Create.playlist_created)
+        typer.echo(Create.pub_status.format(public))
+        typer.echo(Create.collab_status.format(collab))
+        typer.echo(Create.desc_status.format(desc))
 
     else:
-        typer.echo(
-            "A playlist with that name already exists.\n"
-            + "Choose a diffrent name or use '--force'"
-            + "to create a playlist with the same name "
-            + "as the existing playlist."
-        )
+        typer.echo(Create.dupe_exists_no_force)
 
 
 # TODO: add a "follow" command
@@ -77,25 +69,19 @@ def create(
 @app.command()
 def delete(
     name: str = typer.Argument(""),
-    id: str = typer.Option("", help="Use id to specify playlist"),
+    id: str = typer.Option("", help=Delete.id_help),
     no_prompt: bool = typer.Option(
         False,
         "--no-prompt",
-        help="Do not prompt user to confirm deletion. Will be ignored if NAME "
-        + "is supplied and multiple playlists exist with the same name.\n"
-        + "See '--all' for deleting multiple lists that share the same name.",
+        help=Delete.no_prompt_help,
     ),
-    all: bool = typer.Option(
-        False,
-        help="If multiple lists are found that share the same name, delete all. "
-        + "Only has effect if used with --no-prompt.",
-    ),
+    all: bool = typer.Option(False, help=Delete.all_help),
 ):
     """
     Delete (unfollow) a playlist from your library.
     """
     if name == "" and id == "":
-        typer.echo("You must specify NAME or ID")
+        typer.echo(Delete.specify_name_or_id)
         exit(1)
 
     # Retrieve any playlists matching 'name' or 'id'
@@ -105,7 +91,7 @@ def delete(
 
     # Report how many playlist were found matching 'name' if name was used
     if id == "" and playlists != None:
-        typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
+        typer.echo(General.num_playlists_found.format(len(playlists), name))
 
         # If there is more than one playlist with the same name, list them out
         if len(playlists) > 1:
@@ -118,26 +104,20 @@ def delete(
 
     # Exit if there are duplicate playlist names and the right flags are not present
     if playlists != None and len(playlists) > 1 and not (all and no_prompt):
-        typer.echo(
-            f"Multiple playlists were found with name: {name}."
-            + "\nPlease use '--no-prompt' with '--all' to "
-            + "delete all, or specify with '--id' which playlist to delete."
-        )
+        typer.echo(Delete.duplicates_found.format(name))
         exit(0)
 
     # Exit if the name or id given does not match any given playlist
     label = f"with name: '{name}'" if id == "" else f"with id: '{id}'"
     if playlists is None:
-        typer.echo(f"Playlist {label} appears to not exist!")
-        typer.echo("Operation cancelled")
+        typer.echo(General.playlist_DNE.format(label))
+        typer.echo(General.operation_canceled)
         exit(1)
 
     # If '--no-prompt' was not used, confirm delete with user
     confirm_delete = False
     if not no_prompt:
-        confirm_delete = typer.confirm(
-            text=f"Are you sure you want to delete the playlist {label}?"
-        )
+        confirm_delete = typer.confirm(text=Delete.confirm_delete.format(label))
     else:
         confirm_delete = True
 
@@ -150,14 +130,14 @@ def delete(
 
         if all:
             delete_all(sp, pl_name=name)
-            typer.echo(f"Deleted all playlists associated with name: {pl_name}")
+            typer.echo(Delete.deleted_all.format(pl_name))
         else:
             delete_playlist(sp, pl_id)
-            typer.echo(f"Deleted playlist: {pl_name}, ID: {pl_id}")
+            typer.echo(Delete.deleted_playlist.format(pl_name, pl_id))
         exit(0)
 
     else:
-        typer.echo("Operation cancelled")
+        typer.echo(General.operation_canceled)
 
 
 @app.command()

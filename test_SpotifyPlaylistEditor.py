@@ -1,6 +1,7 @@
 from os import name
 from time import sleep
 
+from AppStrings import *
 from SpotifyUtils import *
 from typer.testing import CliRunner
 from SpotifyPlaylistEditor import sp, app
@@ -20,7 +21,7 @@ class TestCreate:
 
         assert pl_exists == True
         assert result.exit_code == 0
-        assert "Playlist created." in result.stdout
+        assert Create.playlist_created in result.stdout
 
     def test_create_name_clash_no_force(self):
         create_playlist(sp, TEST_PL_NAME)
@@ -30,13 +31,7 @@ class TestCreate:
         delete_all(sp, TEST_PL_NAME)
 
         assert result.exit_code == 0
-        assert (
-            "A playlist with that name already exists.\n"
-            + "Choose a diffrent name or use '--force'"
-            + "to create a playlist with the same name "
-            + "as the existing playlist."
-            in result.stdout
-        )
+        assert Create.dupe_exists_no_force in result.stdout
 
     def test_create_name_clash_force(self):
         create_playlist(sp, TEST_PL_NAME)
@@ -52,12 +47,11 @@ class TestCreate:
 
         assert pl_exists == True
         assert result.exit_code == 0
-        assert "Playlist with duplicate name created." in result.stdout
+        assert Create.duplicate_created in result.stdout
 
     def test_create_with_description(self):
-        result = runner.invoke(
-            app, ["create", TEST_PL_NAME, "--desc", "A test playlist"]
-        )
+        desc = "A test playlist"
+        result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
         pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
         pl_exists = check_exists(sp, pl_id)
         # Clean up
@@ -65,8 +59,8 @@ class TestCreate:
 
         assert pl_exists == True
         assert result.exit_code == 0
-        assert "Playlist created." in result.stdout
-        assert "Description:" in result.stdout
+        assert Create.playlist_created in result.stdout
+        assert Create.desc_status.format(desc) in result.stdout
 
     def test_create_public(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
@@ -77,8 +71,8 @@ class TestCreate:
 
         assert pl_exists == True
         assert result.exit_code == 0
-        assert "Playlist created." in result.stdout
-        assert "Public: True" in result.stdout
+        assert Create.playlist_created in result.stdout
+        assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
@@ -89,15 +83,15 @@ class TestCreate:
 
         assert pl_exists == True
         assert result.exit_code == 0
-        assert "Playlist created." in result.stdout
-        assert "Collaborative: True" in result.stdout
+        assert Create.playlist_created in result.stdout
+        assert Create.collab_status.format("True") in result.stdout
 
 
 class TestDelete:
     def test_delete_no_name_or_id(self):
         result = runner.invoke(app, ["delete", "--no-prompt"])
         assert result.exit_code == 1
-        assert "You must specify NAME or ID" in result.stdout
+        assert Delete.specify_name_or_id in result.stdout
 
     def test_delete_prompt_cancled(self):
         pl_id = create_playlist(sp, TEST_PL_NAME)
@@ -106,7 +100,7 @@ class TestDelete:
         # Cleanup
         delete_playlist(sp, pl_id)
         assert result.exit_code == 0
-        assert "Operation cancelled" in result.stdout
+        assert General.operation_canceled in result.stdout
 
     def test_delete_prompt_approved(self):
         pl_id = create_playlist(sp, TEST_PL_NAME)
@@ -119,7 +113,7 @@ class TestDelete:
             delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
-        assert f"Deleted playlist: {TEST_PL_NAME}" in result.stdout
+        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert pl_exists == False
 
     def test_delete_by_id(self):
@@ -133,7 +127,7 @@ class TestDelete:
             delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
-        assert f"Deleted playlist: {TEST_PL_NAME}, ID: {pl_id}" in result.stdout
+        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert pl_exists == False
 
     def test_delete_no_prompt(self):
@@ -147,7 +141,7 @@ class TestDelete:
             delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
-        assert f"Deleted playlist: {TEST_PL_NAME}" in result.stdout
+        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert pl_exists == False
 
     def test_delete_playlist_DNE(self):
@@ -248,12 +242,7 @@ class TestDelete:
         delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
-        assert (
-            f"Multiple playlists were found with name: {TEST_PL_NAME}."
-            + "\nPlease use '--no-prompt' with '--all' to "
-            + "delete all, or specify with '--id' which playlist to delete."
-            in result.stdout
-        )
+        assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
 
     def test_delete_name_clash_prompt_all(self):
         """
@@ -272,19 +261,14 @@ class TestDelete:
         delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
-        assert (
-            f"Multiple playlists were found with name: {TEST_PL_NAME}."
-            + "\nPlease use '--no-prompt' with '--all' to "
-            + "delete all, or specify with '--id' which playlist to delete."
-            in result.stdout
-        )
+        assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
 
 
 class TestSearch:
     def test_search_no_name_provided(self):
         result = runner.invoke(app, ["search"])
         assert result.exit_code == 0
-        assert "No name provided, listing all playlists..." in result.stdout
+        assert Search.listing_all in result.stdout
 
     def test_search_name_provided_and_playlist_exists(self):
         pl_id = create_playlist(sp, TEST_PL_NAME)
@@ -294,12 +278,12 @@ class TestSearch:
         delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
-        assert f"1 playlist(s) found matching name {TEST_PL_NAME}" in result.stdout
+        assert General.num_playlists_found.format(1, TEST_PL_NAME) in result.stdout
 
     def test_search_name_provided_and_playlist_DNE(self):
         result = runner.invoke(app, ["search", TEST_PL_NAME])
         assert result.exit_code == 1
-        assert f"Could not find {TEST_PL_NAME} in user's playlists." in result.stdout
+        assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
         pl_id1 = create_playlist(sp, TEST_PL_NAME)
@@ -311,7 +295,7 @@ class TestSearch:
         delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
-        assert f"2 playlist(s) found matching name {TEST_PL_NAME}" in result.stdout
+        assert General.num_playlists_found.format(2, TEST_PL_NAME) in result.stdout
 
 
 # Dumb hack for debugging test cases:
