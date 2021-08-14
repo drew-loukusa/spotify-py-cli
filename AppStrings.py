@@ -57,6 +57,8 @@ class Search:
     public_help = (
         "Search public playlists instead of user's followed and created playlists"
     )
+    limit_help = "The number of items to return (min = 1, default = 10, max = 50)"
+    market_help = "An ISO 3166-1 alpha-2 country code or the string"
 
     listing_all = (
         "No name provided, listing all playlists (user created and followed)..."

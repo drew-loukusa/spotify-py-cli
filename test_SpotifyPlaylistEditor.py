@@ -309,6 +309,32 @@ class TestSearch:
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
 
+    def test_search_public_limit_results(self):
+        if USE_DUMMY_WRAPPER:
+            create_playlist(sp, "Massive Drum & Bass")
+        result = runner.invoke(
+            app, ["search", "Massive Drum & Bass", "--public", "--limit", 5]
+        )
+
+        assert result.exit_code == 0
+        assert Search.search_public in result.stdout
+        pattern = Search.num_public.replace("{}", r"\d+", 1)
+        pattern = pattern.replace("{}", ".+", 1)
+        assert re.search(pattern, result.stdout)
+
+    def test_search_public_change_market(self):
+        if USE_DUMMY_WRAPPER:
+            create_playlist(sp, "Massive Drum & Bass")
+        result = runner.invoke(
+            app, ["search", "Massive Drum & Bass", "--public", "--market", "GB"]
+        )
+
+        assert result.exit_code == 0
+        assert Search.search_public in result.stdout
+        pattern = Search.num_public.replace("{}", r"\d+", 1)
+        pattern = pattern.replace("{}", ".+", 1)
+        assert re.search(pattern, result.stdout)
+
     # TODO:
     # * Write test case for search flag '--market'
     # * Write test case for search flag '--limit'

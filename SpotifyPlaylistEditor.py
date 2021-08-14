@@ -161,6 +161,8 @@ def delete(
 def search(
     name: str = typer.Argument(""),
     public: bool = typer.Option(False, help=Search.public_help),
+    limit: int = typer.Option(10, help=Search.limit_help),
+    market: str = typer.Option("", help=Search.market_help),
 ):
     """
     Search through playlists you follow.
@@ -188,7 +190,7 @@ def search(
     else:
         typer.echo(Search.search_public)
 
-        playlists = search_public_playlist(sp, name, limit=10, market=None)
+        playlists = search_public_playlist(sp, name, limit=limit, market=market)
 
         print(f"Found {len(playlists)} playlists matching the search query: '{name}'")
         for playlist in playlists:
