@@ -1,6 +1,6 @@
-import os
 import typer
 import spotipy
+import textwrap
 from decouple import config
 from AppStrings import *
 from SpotifyUtils import *
@@ -13,7 +13,6 @@ SPOTIPY_CLIENT_ID = config("SPOTIPY_CLIENT_ID")
 SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
 
-# USE_DUMMY_WRAPPER = os.getenv("USE_DUMMY_WRAPPER")
 sp = (
     DummySpotipy()
     if USE_DUMMY_WRAPPER
@@ -189,6 +188,32 @@ def search(
     else:
         typer.echo(Search.search_public)
 
+        playlists = search_public_playlist(sp, name, limit=10, market=None)
+
+        print(f"Found {len(playlists)} playlists matching the search query: '{name}'")
+        for playlist in playlists:
+            print("-----------------------")
+            print(f"Name:\t\t{playlist['name']}")
+
+            # TODO: Print user created playlists, and playlists user follows like this too
+            desc = playlist["description"]
+            wrapped_desc = textwrap.wrap(
+                "Description:\t" + desc,
+                width=64,
+                initial_indent="",
+                subsequent_indent="\t\t",
+            )
+            for line in wrapped_desc:
+                print(line)
+
+            print(f"Owner:\t\t{playlist['owner']['display_name']}")
+            print(f"Track count:\t{playlist['tracks']['total']}")
+
+            print(f"Playlist id:\t{playlist['id']}")
+            print(f"Owner id:\t{playlist['owner']['id']}")
+            print(f"Url: {playlist['external_urls']['spotify']}")
+
 
 if __name__ == "__main__":
+    create_playlist(sp, "Massive Drum & Bass")
     app()

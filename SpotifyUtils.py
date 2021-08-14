@@ -8,7 +8,7 @@ def search_public_playlist(sp, query, limit=10, market=None):
     results = sp.search(q, limit=limit, offset=0, type="playlist", market=None)
     if results != None:
         return results["playlists"]["items"]
-    return None
+    return []
 
 
 def create_playlist(

@@ -65,3 +65,4 @@ class Search:
     show_info = "{}, ID: {}\nDescription:\n{}"
 
     search_public = "Searching public playlists..."
+    num_public = "Found {} playlists matching the search query: '{}'"
