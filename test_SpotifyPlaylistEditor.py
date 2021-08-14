@@ -297,6 +297,12 @@ class TestSearch:
         assert result.exit_code == 0
         assert General.num_playlists_found.format(2, TEST_PL_NAME) in result.stdout
 
+    def test_search_multiple_exist(self):
+        result = runner.invoke(app, ["search", TEST_PL_NAME, "--public"])
+
+        assert result.exit_code == 0
+        assert Search.search_public in result.stdout
+
 
 # Dumb hack for debugging test cases:
 

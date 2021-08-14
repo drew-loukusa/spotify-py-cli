@@ -2,6 +2,15 @@ import spotipy
 from typing import List
 
 
+def search_public_playlist(sp, query, limit=10, market=None):
+    """Search public playlists."""
+    q = query.replace(" ", "+")
+    results = sp.search(q, limit=limit, offset=0, type="playlist", market=None)
+    if results != None:
+        return results["playlists"]["items"]
+    return None
+
+
 def create_playlist(
     sp: spotipy.Spotify, name: str, public=False, collaborative=False, description=""
 ) -> str:

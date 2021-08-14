@@ -1,5 +1,6 @@
 secrets.ps1
 .vscode/
+.env
 scripts
 
 # Byte-compiled / optimized / DLL files

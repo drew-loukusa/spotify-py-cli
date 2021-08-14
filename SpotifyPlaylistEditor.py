@@ -1,17 +1,30 @@
 import os
 import typer
 import spotipy
+from decouple import config
 from AppStrings import *
 from SpotifyUtils import *
 from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
 
-scope = "playlist-modify-private playlist-read-private playlist-read-collaborative playlist-modify-public"
-USE_DUMMY_WRAPPER = os.getenv("USE_DUMMY_WRAPPER")
+SCOPE = "playlist-modify-private playlist-read-private playlist-read-collaborative playlist-modify-public"
+USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool)
+SPOTIPY_CLIENT_ID = config("SPOTIPY_CLIENT_ID")
+SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
+SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
+
+# USE_DUMMY_WRAPPER = os.getenv("USE_DUMMY_WRAPPER")
 sp = (
     DummySpotipy()
-    if USE_DUMMY_WRAPPER == "True"
-    else spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+    if USE_DUMMY_WRAPPER
+    else spotipy.Spotify(
+        auth_manager=SpotifyOAuth(
+            client_id=SPOTIPY_CLIENT_ID,
+            client_secret=SPOTIPY_CLIENT_SECRET,
+            redirect_uri=SPOTIPY_REDIRECT_URI,
+            scope=SCOPE,
+        )
+    )
 )
 app = typer.Typer()
 
@@ -61,6 +74,11 @@ def create(
 
 
 # TODO: add a "follow" command
+# TODO: Before I can add a follow command, I need to implement searching through PUBLIC playlists
+#       I need to update 'search' to search:
+#           > Just a user's followed + created, playlists
+#           > Public playlists
+#           Add a flag to do this. Default should be...?
 # Use:
 # user_playlist_is_following(playlist_owner_id, playlist_id, user_ids)
 # user_playlist_follow_playlist(playlist_owner_id, playlist_id)
@@ -141,28 +159,35 @@ def delete(
 
 
 @app.command()
-def search(name: str = typer.Argument("")):
+def search(
+    name: str = typer.Argument(""),
+    public: bool = typer.Option(False, help=Search.public_help),
+):
     """
     Search through playlists you follow.
     Don't provide a name and this command will list all playlists you follow.
+
+    Can also search public playlists with '--public'
     """
     if name == "":
-        typer.echo("No name provided, listing all playlists...")
+        typer.echo(Search.listing_all)
         list_playlists(sp)
-    else:
+    elif not public:
         playlists = get_playlist(sp, name)
         if playlists is None:
-            typer.echo(f"Could not find {name} in user's playlists.")
+            typer.echo(Search.playlist_DNE.format(name))
             exit(1)
         else:
-            typer.echo(f"{len(playlists)} playlist(s) found matching name {name}")
+            typer.echo(General.num_playlists_found.format(len(playlists), name))
             for playlist in playlists:
-                pn, pid, desc = (
+                pl_name, pid, desc = (
                     playlist["name"],
                     playlist["id"],
                     playlist["description"],
                 )
-                print(f"{pn}, ID: {pid}\nDescription:\n{desc}")
+                typer.echo(Search.show_info.format(pl_name, pid, desc))
+    else:
+        typer.echo(Search.search_public)
 
 
 if __name__ == "__main__":

@@ -54,4 +54,14 @@ class Delete:
 
 
 class Search:
-    listing_all = "No name provided, listing all playlists..."
+    public_help = (
+        "Search public playlists instead of user's followed and created playlists"
+    )
+
+    listing_all = (
+        "No name provided, listing all playlists (user created and followed)..."
+    )
+    playlist_DNE = "Could not find {} in user's playlists."
+    show_info = "{}, ID: {}\nDescription:\n{}"
+
+    search_public = "Searching public playlists..."
