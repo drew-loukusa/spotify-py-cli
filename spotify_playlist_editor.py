@@ -161,7 +161,7 @@ def search(
     name: str = typer.Argument(""),
     public: bool = typer.Option(False, help=Search.public_help),
     limit: int = typer.Option(10, help=Search.limit_help),
-    market: str = typer.Option("", help=Search.market_help),
+    market: str = typer.Option(None, help=Search.market_help),
 ):
     """
     Search through playlists you follow.
