@@ -1,7 +1,6 @@
 """A CLI app for managing your Spotify playlists. It's not very good yet, so please be patient."""
 
 import sys
-import textwrap
 import typer
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
@@ -171,7 +170,9 @@ def search(
     """
     if name == "":
         typer.echo(Search.listing_all)
-        sp.list_playlists()
+        sp.print_playlists(typer.echo, sp.get_user_playlists())
+
+    # Search through user created playlists, and user followed playlists
     elif not public:
         playlists = sp.get_playlist(name)
         if playlists is None:
@@ -179,40 +180,15 @@ def search(
             sys.exit(1)
         else:
             typer.echo(General.num_playlists_found.format(len(playlists), name))
-            for playlist in playlists:
-                pl_name, pid, desc = (
-                    playlist["name"],
-                    playlist["id"],
-                    playlist["description"],
-                )
-                typer.echo(Search.show_info.format(pl_name, pid, desc))
+            sp.print_playlists(typer.echo, playlists)
+
+    # Search through all public playlists
     else:
         typer.echo(Search.search_public)
-
         playlists = sp.search_public_playlist(name, limit=limit, market=market)
 
-        print(f"Found {len(playlists)} playlists matching the search query: '{name}'")
-        for playlist in playlists:
-            print("-----------------------")
-            print(f"Name:\t\t{playlist['name']}")
-
-            # TODO: Print user created playlists, and playlists user follows like this too
-            desc = playlist["description"]
-            wrapped_desc = textwrap.wrap(
-                "Description:\t" + desc,
-                width=64,
-                initial_indent="",
-                subsequent_indent="\t\t",
-            )
-            for line in wrapped_desc:
-                print(line)
-
-            print(f"Owner:\t\t{playlist['owner']['display_name']}")
-            print(f"Track count:\t{playlist['tracks']['total']}")
-
-            print(f"Playlist id:\t{playlist['id']}")
-            print(f"Owner id:\t{playlist['owner']['id']}")
-            print(f"Url: {playlist['external_urls']['spotify']}")
+        typer.echo(Search.num_public.format(len(playlists), name))
+        sp.print_playlists(typer.echo, playlists)
 
 
 if __name__ == "__main__":

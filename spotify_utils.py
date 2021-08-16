@@ -1,4 +1,5 @@
 """This module contains utility functions built on top of the spotipy wrapper"""
+import textwrap
 from typing import List
 import spotipy
 from decouple import config
@@ -30,7 +31,7 @@ class SpotifyExtended(BaseClass):
         return []
 
     def create_playlist(
-        self: spotipy.Spotify,
+        self,
         name: str,
         public=False,
         collaborative=False,
@@ -50,18 +51,27 @@ class SpotifyExtended(BaseClass):
         )
         return result["id"]
 
-    def list_playlists(self: spotipy.Spotify) -> None:
-        """Lists all of a users playlists"""
+    def get_user_playlists(self):
+        """Gets all of a users playlists"""
         user_id = self.me()["id"]
-        playlists = self.user_playlists(user_id)
-        for pl_list in playlists["items"]:
-            print(pl_list["name"], pl_list["id"])
+        res = self.user_playlists(user_id)
+        if res is not None:
+            return res["items"]
+        return res
 
-    def delete_playlist(self: spotipy.Spotify, pl_id: str) -> None:
+    def list_playlists(self) -> None:
+        """Lists all of a users playlists"""
+
+        playlists = self.get_user_playlists()
+        if playlists is not None:
+            for pl_list in playlists:
+                print(pl_list["name"], pl_list["id"])
+
+    def delete_playlist(self, pl_id: str) -> None:
         """Attempts to delete the playlist with the id 'pl_id'"""
         self.current_user_unfollow_playlist(playlist_id=pl_id)
 
-    def delete_all(self: spotipy.Spotify, pl_name: str) -> None:
+    def delete_all(self, pl_name: str) -> None:
         """Attempts to delete all playlists with the same name"""
         playlists = self.get_playlist(pl_name=pl_name)
         if playlists is not None:
@@ -75,12 +85,12 @@ class SpotifyExtended(BaseClass):
     # Search in a linear fashion through < 1000 vaules is easy for a computer.
     # Might improve this at some point, but for now it's fine. TODO maybe.
 
-    def check_exists(self: spotipy.Spotify, pl_id: str) -> bool:
+    def check_exists(self, pl_id: str) -> bool:
         """Checks if a playlist exists."""
         playlist = self.get_playlist(pl_name=None, pl_id=pl_id)
         return playlist is not None
 
-    def get_pl_id(self: spotipy.Spotify, pl_name: str) -> List[str]:
+    def get_pl_id(self, pl_name: str) -> List[str]:
         """
         Gets the id of a playlist(s) given a name.
         Returns None if playlist does not exist.
@@ -95,9 +105,7 @@ class SpotifyExtended(BaseClass):
             return id_list
         return None
 
-    def get_playlist(
-        self: spotipy.Spotify, pl_name: str = None, pl_id: str = None
-    ) -> List[dict]:
+    def get_playlist(self, pl_name: str = None, pl_id: str = None) -> List[dict]:
         """
         Attempts to retrieve all info related to a given playlist.
         Accepts playlist name or id as ways of getting the playlist.
@@ -117,3 +125,34 @@ class SpotifyExtended(BaseClass):
                 selected_playlists.append(playlist)
 
         return None if len(selected_playlists) == 0 else selected_playlists
+
+    @staticmethod
+    def stringify_playlist(playlist) -> str:
+        """Extract relevant info about a playlist from the dict 'playlist' as a string"""
+        info = ["-----------------------"]
+        info += [f"Name:\t\t{playlist['name']}"]
+
+        desc = playlist["description"]
+        wrapped_desc = textwrap.wrap(
+            "Description:\t" + desc,
+            width=64,
+            initial_indent="",
+            subsequent_indent="\t\t",
+        )
+        info.extend(wrapped_desc)
+        info += [f"Owner:\t\t{playlist['owner']['display_name']}"]
+        info += [f"Track count:\t{playlist['tracks']['total']}"]
+        info += [f"Playlist id:\t{playlist['id']}"]
+        info += [f"Owner id:\t{playlist['owner']['id']}"]
+        info += [f"Url: {playlist['external_urls']['spotify']}"]
+
+        return "\n".join(info)
+
+    @staticmethod
+    def print_playlists(print_function, playlists):
+        if playlists is None:
+            print_function("No playlists to print!")
+            return
+
+        for pl_list in playlists:
+            print_function(SpotifyExtended.stringify_playlist(pl_list))

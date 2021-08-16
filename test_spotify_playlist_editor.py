@@ -333,12 +333,6 @@ class TestSearch:
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
 
-    # TODO:
-    # * Write test case for search flag '--market'
-    # * Write test case for search flag '--limit'
-    # * implement '--market' '--limit' for search
-    # Move strings from editor to AppStrings, from the new search functionality
-
 
 # Dumb hack for debugging test cases:
 
