@@ -2,10 +2,10 @@ import re
 from os import name
 from time import sleep
 
-from AppStrings import *
-from SpotifyUtils import *
+from app_strings import *
+from spotify_utils import *
 from typer.testing import CliRunner
-from SpotifyPlaylistEditor import USE_DUMMY_WRAPPER, sp, app
+from spotify_playlist_editor import USE_DUMMY_WRAPPER, sp, app
 
 runner = CliRunner()
 
@@ -351,4 +351,4 @@ class TestSearch:
 # os.environ['USE_DUMMY_WRAPPER'] = 'True'
 
 # Run test case directly here.
-TestSearch().test_search_public()
+#TestSearch().test_search_public()
