@@ -1,4 +1,4 @@
-"""A CLI app for managing your Spotify playlists.It's not very good yet, so please be patient."""
+"""A CLI app for managing your Spotify playlists. It's not very good yet, so please be patient."""
 
 import sys
 import textwrap
@@ -15,7 +15,7 @@ SCOPE = "playlist-modify-private \
     playlist-read-private \
     playlist-read-collaborative \
     playlist-modify-public"
-USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool)
+USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SPOTIPY_CLIENT_ID = config("SPOTIPY_CLIENT_ID")
 SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")

@@ -1,10 +1,8 @@
 import re
-from os import name
-from time import sleep
 
-from app_strings import *
-from spotify_utils import *
 from typer.testing import CliRunner
+from app_strings import General, Create, Search, Delete
+import spotify_utils as SPU
 from spotify_playlist_editor import USE_DUMMY_WRAPPER, sp, app
 
 runner = CliRunner()
@@ -15,74 +13,74 @@ TEST_PL_NAME = "TEST_PL_NAME"
 class TestCreate:
     def test_create_playlist(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME])
-        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
-        pl_exists = check_exists(sp, pl_id)
+        pl_id = SPU.get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = SPU.check_exists(sp, pl_id)
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        SPU.delete_all(sp, TEST_PL_NAME)
 
-        assert pl_exists == True
+        assert pl_exists
         assert result.exit_code == 0
         assert Create.playlist_created in result.stdout
 
     def test_create_name_clash_no_force(self):
-        create_playlist(sp, TEST_PL_NAME)
+        SPU.create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["create", TEST_PL_NAME])
 
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        SPU.delete_all(sp, TEST_PL_NAME)
 
         assert result.exit_code == 0
         assert Create.dupe_exists_no_force in result.stdout
 
     def test_create_name_clash_force(self):
-        create_playlist(sp, TEST_PL_NAME)
+        SPU.create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--force"])
 
-        pl_ids = get_pl_id(sp, TEST_PL_NAME)
+        pl_ids = SPU.get_pl_id(sp, TEST_PL_NAME)
         pl_exists = True
-        for id in pl_ids:
-            pl_exists = check_exists(sp, id)
+        for cur_id in pl_ids:
+            pl_exists = SPU.check_exists(sp, cur_id)
 
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        SPU.delete_all(sp, TEST_PL_NAME)
 
-        assert pl_exists == True
+        assert pl_exists
         assert result.exit_code == 0
         assert Create.duplicate_created in result.stdout
 
     def test_create_with_description(self):
         desc = "A test playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
-        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
-        pl_exists = check_exists(sp, pl_id)
+        pl_id = SPU.get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = SPU.check_exists(sp, pl_id)
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        SPU.delete_all(sp, TEST_PL_NAME)
 
-        assert pl_exists == True
+        assert pl_exists
         assert result.exit_code == 0
         assert Create.playlist_created in result.stdout
         assert Create.desc_status.format(desc) in result.stdout
 
     def test_create_public(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
-        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
-        pl_exists = check_exists(sp, pl_id)
+        pl_id = SPU.get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = SPU.check_exists(sp, pl_id)
         # Clean up
-        delete_all(sp, TEST_PL_NAME)
+        SPU.delete_all(sp, TEST_PL_NAME)
 
-        assert pl_exists == True
+        assert pl_exists
         assert result.exit_code == 0
         assert Create.playlist_created in result.stdout
         assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
-        pl_id = get_pl_id(sp, TEST_PL_NAME)[0]
-        pl_exists = check_exists(sp, pl_id)
+        pl_id = SPU.get_pl_id(sp, TEST_PL_NAME)[0]
+        pl_exists = SPU.check_exists(sp, pl_id)
         # Clean up
-        delete_playlist(sp, pl_id)
+        SPU.delete_playlist(sp, pl_id)
 
-        assert pl_exists == True
+        assert pl_exists
         assert result.exit_code == 0
         assert Create.playlist_created in result.stdout
         assert Create.collab_status.format("True") in result.stdout
@@ -95,55 +93,55 @@ class TestDelete:
         assert Delete.specify_name_or_id in result.stdout
 
     def test_delete_prompt_cancled(self):
-        pl_id = create_playlist(sp, TEST_PL_NAME)
+        pl_id = SPU.create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["delete", TEST_PL_NAME], input="n\n")
 
         # Cleanup
-        delete_playlist(sp, pl_id)
+        SPU.delete_playlist(sp, pl_id)
         assert result.exit_code == 0
         assert General.operation_canceled in result.stdout
 
     def test_delete_prompt_approved(self):
-        pl_id = create_playlist(sp, TEST_PL_NAME)
+        pl_id = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\n")
-        pl_exists = check_exists(sp, pl_id)
+        pl_exists = SPU.check_exists(sp, pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            delete_playlist(sp, pl_id)
+            SPU.delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
         assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
-        assert pl_exists == False
+        assert not pl_exists
 
     def test_delete_by_id(self):
-        pl_id = create_playlist(sp, TEST_PL_NAME)
+        pl_id = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", "--id", pl_id], input="y\n")
-        pl_exists = check_exists(sp, pl_id)
+        pl_exists = SPU.check_exists(sp, pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            delete_playlist(sp, pl_id)
+            SPU.delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
         assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
-        assert pl_exists == False
+        assert not pl_exists
 
     def test_delete_no_prompt(self):
-        pl_id = create_playlist(sp, TEST_PL_NAME)
+        pl_id = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", "--no-prompt", TEST_PL_NAME])
-        pl_exists = check_exists(sp, pl_id)
+        pl_exists = SPU.check_exists(sp, pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            delete_playlist(sp, pl_id)
+            SPU.delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
         assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
-        assert pl_exists == False
+        assert not pl_exists
 
     def test_delete_playlist_DNE(self):
         result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\n")
@@ -175,7 +173,7 @@ class TestDelete:
     #     assert (
     #         f"Multiple playlists were found with name: {TEST_PL_NAME}" in result.stdout
     #     )
-    #     assert pl_exists == False
+    #     assert not pl_exists
 
     # def test_delete_name_clash_prompt_select_all(self):
     #     """
@@ -200,8 +198,8 @@ class TestDelete:
     #     assert (
     #         f"Multiple playlists were found with name: {TEST_PL_NAME}" in result.stdout
     #     )
-    #     assert pl1_exists == False
-    #     assert pl2_exists == False
+    #     assert not pl1_exists
+    #     assert not pl2_exists
 
     def test_delete_name_clash_no_prompt_all(self):
         """
@@ -209,22 +207,22 @@ class TestDelete:
         Skip prompt with --no-prompt
         Use --all flag to delete all.
         """
-        pl_id1 = create_playlist(sp, TEST_PL_NAME)
-        pl_id2 = create_playlist(sp, TEST_PL_NAME)
+        pl_id1 = SPU.create_playlist(sp, TEST_PL_NAME)
+        pl_id2 = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", "--no-prompt", "--all", TEST_PL_NAME])
-        pl1_exists = check_exists(sp, pl_id1)
-        pl2_exists = check_exists(sp, pl_id1)
+        pl1_exists = SPU.check_exists(sp, pl_id1)
+        pl2_exists = SPU.check_exists(sp, pl_id1)
 
         # Cleanup, if needed
         if pl1_exists:
-            delete_playlist(sp, pl_id1)
+            SPU.delete_playlist(sp, pl_id1)
         if pl2_exists:
-            delete_playlist(sp, pl_id2)
+            SPU.delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
-        assert pl1_exists == False
-        assert pl2_exists == False
+        assert not pl1_exists
+        assert not pl2_exists
 
     def test_delete_name_clash_no_prompt_no_all(self):
         """
@@ -233,14 +231,14 @@ class TestDelete:
         If multiple lists exist with given name, cli does not know
         which to delete. It should exit with code 1, and tell user.
         """
-        pl_id1 = create_playlist(sp, TEST_PL_NAME)
-        pl_id2 = create_playlist(sp, TEST_PL_NAME)
+        pl_id1 = SPU.create_playlist(sp, TEST_PL_NAME)
+        pl_id2 = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", "--no-prompt", TEST_PL_NAME])
 
         # Cleanup
-        delete_playlist(sp, pl_id1)
-        delete_playlist(sp, pl_id2)
+        SPU.delete_playlist(sp, pl_id1)
+        SPU.delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
         assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
@@ -252,14 +250,14 @@ class TestDelete:
         If multiple lists exist with given name, cli does not know
         which to delete. It should exit with code 1, and tell user.
         """
-        pl_id1 = create_playlist(sp, TEST_PL_NAME)
-        pl_id2 = create_playlist(sp, TEST_PL_NAME)
+        pl_id1 = SPU.create_playlist(sp, TEST_PL_NAME)
+        pl_id2 = SPU.create_playlist(sp, TEST_PL_NAME)
 
         result = runner.invoke(app, ["delete", "--all", TEST_PL_NAME])
 
         # Cleanup
-        delete_playlist(sp, pl_id1)
-        delete_playlist(sp, pl_id2)
+        SPU.delete_playlist(sp, pl_id1)
+        SPU.delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
         assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
@@ -272,11 +270,11 @@ class TestSearch:
         assert Search.listing_all in result.stdout
 
     def test_search_name_provided_and_playlist_exists(self):
-        pl_id = create_playlist(sp, TEST_PL_NAME)
+        pl_id = SPU.create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["search", TEST_PL_NAME])
 
         # Clean up
-        delete_playlist(sp, pl_id)
+        SPU.delete_playlist(sp, pl_id)
 
         assert result.exit_code == 0
         assert General.num_playlists_found.format(1, TEST_PL_NAME) in result.stdout
@@ -287,20 +285,20 @@ class TestSearch:
         assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
-        pl_id1 = create_playlist(sp, TEST_PL_NAME)
-        pl_id2 = create_playlist(sp, TEST_PL_NAME)
+        pl_id1 = SPU.create_playlist(sp, TEST_PL_NAME)
+        pl_id2 = SPU.create_playlist(sp, TEST_PL_NAME)
         result = runner.invoke(app, ["search", TEST_PL_NAME])
 
         # Clean up
-        delete_playlist(sp, pl_id1)
-        delete_playlist(sp, pl_id2)
+        SPU.delete_playlist(sp, pl_id1)
+        SPU.delete_playlist(sp, pl_id2)
 
         assert result.exit_code == 0
         assert General.num_playlists_found.format(2, TEST_PL_NAME) in result.stdout
 
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:
-            create_playlist(sp, "Massive Drum & Bass")
+            SPU.create_playlist(sp, "Massive Drum & Bass")
         result = runner.invoke(app, ["search", "Massive Drum & Bass", "--public"])
 
         assert result.exit_code == 0
@@ -311,7 +309,7 @@ class TestSearch:
 
     def test_search_public_limit_results(self):
         if USE_DUMMY_WRAPPER:
-            create_playlist(sp, "Massive Drum & Bass")
+            SPU.create_playlist(sp, "Massive Drum & Bass")
         result = runner.invoke(
             app, ["search", "Massive Drum & Bass", "--public", "--limit", 5]
         )
@@ -324,7 +322,7 @@ class TestSearch:
 
     def test_search_public_change_market(self):
         if USE_DUMMY_WRAPPER:
-            create_playlist(sp, "Massive Drum & Bass")
+            SPU.create_playlist(sp, "Massive Drum & Bass")
         result = runner.invoke(
             app, ["search", "Massive Drum & Bass", "--public", "--market", "GB"]
         )
