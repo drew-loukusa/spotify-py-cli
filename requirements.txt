@@ -1,4 +1,4 @@
 spotipy
 typer
 pytest
-decouple
+python-decouple
