@@ -3,35 +3,28 @@
 import sys
 import textwrap
 import typer
-import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
-import spotify_utils
+from spotify_utils import SpotifyExtended
 from app_strings import General, Create, Search, Delete
-from dummy_spotipy import DummySpotipy
-
 
 SCOPE = "playlist-modify-private \
     playlist-read-private \
     playlist-read-collaborative \
     playlist-modify-public"
-USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SPOTIPY_CLIENT_ID = config("SPOTIPY_CLIENT_ID")
 SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
 
-sp = (
-    DummySpotipy()
-    if USE_DUMMY_WRAPPER
-    else spotipy.Spotify(
-        auth_manager=SpotifyOAuth(
-            client_id=SPOTIPY_CLIENT_ID,
-            client_secret=SPOTIPY_CLIENT_SECRET,
-            redirect_uri=SPOTIPY_REDIRECT_URI,
-            scope=SCOPE,
-        )
+sp = SpotifyExtended(
+    auth_manager=SpotifyOAuth(
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET,
+        redirect_uri=SPOTIPY_REDIRECT_URI,
+        scope=SCOPE,
     )
 )
+
 app = typer.Typer()
 
 
@@ -56,12 +49,11 @@ def create(
     """
 
     # Check if name is already in use
-    playlist = spotify_utils.get_playlist(sp, pl_name=name)
+    playlist = sp.get_playlist(pl_name=name)
     name_exists = playlist is not None
 
     if not name_exists or force:
-        spotify_utils.create_playlist(
-            sp,
+        sp.create_playlist(
             name=name,
             public=public,
             collaborative=collab,
@@ -77,6 +69,7 @@ def create(
 
     else:
         typer.echo(Create.dupe_exists_no_force)
+
 
 # TODO: Caching? To reduce number of pings to api
 # TODO: add a "follow" command
@@ -110,9 +103,7 @@ def delete(
 
     # Retrieve any playlists matching 'name' or 'pl_id'
     playlists = (
-        spotify_utils.get_playlist(sp, pl_id=pl_id)
-        if pl_id != ""
-        else spotify_utils.get_playlist(sp, pl_name=name)
+        sp.get_playlist(pl_id=pl_id) if pl_id != "" else sp.get_playlist(pl_name=name)
     )
 
     # Report how many playlist were found matching 'name' if name was used
@@ -155,10 +146,10 @@ def delete(
             pl_name = playlists[0]["name"]
 
         if delete_all:
-            spotify_utils.delete_all(sp, pl_name=name)
+            sp.delete_all(pl_name=name)
             typer.echo(Delete.deleted_all.format(pl_name))
         else:
-            spotify_utils.delete_playlist(sp, pl_id)
+            sp.delete_playlist(pl_id)
             typer.echo(Delete.deleted_playlist.format(pl_name, pl_id))
         sys.exit(0)
 
@@ -180,9 +171,9 @@ def search(
     """
     if name == "":
         typer.echo(Search.listing_all)
-        spotify_utils.list_playlists(sp)
+        sp.list_playlists()
     elif not public:
-        playlists = spotify_utils.get_playlist(sp, name)
+        playlists = sp.get_playlist(name)
         if playlists is None:
             typer.echo(Search.playlist_DNE.format(name))
             sys.exit(1)
@@ -198,9 +189,7 @@ def search(
     else:
         typer.echo(Search.search_public)
 
-        playlists = spotify_utils.search_public_playlist(
-            sp, name, limit=limit, market=market
-        )
+        playlists = sp.search_public_playlist(name, limit=limit, market=market)
 
         print(f"Found {len(playlists)} playlists matching the search query: '{name}'")
         for playlist in playlists:

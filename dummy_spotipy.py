@@ -1,5 +1,11 @@
+""" 
+This module contains a dummy wrapper used for local testing. 
+The dummy wrapper emulates some behavior of the spotipy Spotify API wrapper.
+"""
+
+
 class DummySpotipy:
-    def __init__(self):
+    def __init__(self, auth_manager=None):
         self.pl_id_count = 0
         self.data = {
             "id": "123_fake_user_id",
