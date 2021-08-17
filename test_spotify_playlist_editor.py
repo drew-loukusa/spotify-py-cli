@@ -89,7 +89,7 @@ class TestCreate:
 
 class TestFollow:
     def test_follow_by_id(self):
-        test_name = "Liquid Drum and Bass"
+        test_name = "Liquid Drum & Bass"
         pl_id = "37i9dQZF1DX5wDmLW735Yd"
 
         if sp.following_playlist(pl_id):
