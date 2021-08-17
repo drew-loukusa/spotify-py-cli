@@ -67,6 +67,9 @@ class SpotifyExtended(BaseClass):
             for pl_list in playlists:
                 print(pl_list["name"], pl_list["id"])
 
+    def following_playlist(self, playlist_id):
+        return self.playlist_is_following(playlist_id, [self.me()["id"]])[0]
+
     def unfollow_playlist(self, pl_id: str) -> None:
         """Attempts to unfollow the playlist with the id 'pl_id'"""
         self.current_user_unfollow_playlist(playlist_id=pl_id)

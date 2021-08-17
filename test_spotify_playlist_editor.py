@@ -1,7 +1,8 @@
+from dummy_spotipy import DummySpotipy
 import re
 
 from typer.testing import CliRunner
-from app_strings import General, Create, Search, Unfollow
+from app_strings import General, Create, Search, Unfollow, Follow
 from spotify_utils import USE_DUMMY_WRAPPER
 from spotify_playlist_editor import sp, app
 
@@ -86,11 +87,33 @@ class TestCreate:
         assert Create.collab_status.format("True") in result.stdout
 
 
+class TestFollow:
+    def test_follow_by_id(self):
+        test_name = "Liquid Drum and Bass"
+        pl_id = "37i9dQZF1DX5wDmLW735Yd"
+
+        if sp.following_playlist(pl_id):
+            sp.unfollow_playlist(pl_id)
+
+        if USE_DUMMY_WRAPPER:
+            DummySpotipy.create_non_followed_playlist(sp, test_name, pl_id)
+        result = runner.invoke(app, ["follow", pl_id])
+
+        following = sp.following_playlist(pl_id)
+
+        # Cleanup
+        if following:
+            sp.unfollow_playlist(pl_id)
+
+        assert following
+        assert Follow.followed.format(test_name, pl_id) in result.stdout
+
+
 class TestUnfollow:
     def test_unfollow_no_name_or_id(self):
         result = runner.invoke(app, ["unfollow", "--no-prompt"])
         assert result.exit_code == 1
-        assert Unfollow.specify_name_or_id in result.stdout
+        assert General.specify_name_or_id in result.stdout
 
     def test_unfollow_prompt_cancled(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
@@ -150,56 +173,6 @@ class TestUnfollow:
             f"Playlist with name: '{TEST_PL_NAME}' appears to not exist!"
             in result.stdout
         )
-
-    # Commented out tests for possible future behavior.
-    # def test_unfollow_name_clash_prompt_select_single(self):
-    #     """
-    #     Test deleting when multiple playlists share the same name.
-    #     Prompt user if they want to proceed.
-    #     User selects one playlist to be deleted.
-    #     """
-    #     pl_id1 = create_playlist(TEST_PL_NAME)
-    #     pl_id2 = create_playlist(TEST_PL_NAME)
-
-    #     result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\n1\n")
-    #     pl_exists = check_exists(pl_id1)
-
-    #     # Cleanup
-    #     unfollow_playlist(pl_id2)
-    #     if pl_exists:
-    #         unfollow_playlist(pl_id1)
-
-    #     assert result.exit_code == 0
-    #     assert (
-    #         f"Multiple playlists were found with name: {TEST_PL_NAME}" in result.stdout
-    #     )
-    #     assert not pl_exists
-
-    # def test_unfollow_name_clash_prompt_select_all(self):
-    #     """
-    #     Test deleting multiple playlists.
-    #     Prompt user if they want to proceed.
-    #     User selects all playlists to be deleted.
-    #     """
-    #     pl_id1 = create_playlist(TEST_PL_NAME)
-    #     pl_id2 = create_playlist(TEST_PL_NAME)
-
-    #     result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\nall\n")
-    #     pl1_exists = check_exists(pl_id1)
-    #     pl2_exists = check_exists(pl_id1)
-
-    #     # Cleanup, if needed
-    #     if pl1_exists:
-    #         unfollow_playlist(pl_id1)
-    #     if pl2_exists:
-    #         unfollow_playlist(pl_id2)
-
-    #     assert result.exit_code == 0
-    #     assert (
-    #         f"Multiple playlists were found with name: {TEST_PL_NAME}" in result.stdout
-    #     )
-    #     assert not pl1_exists
-    #     assert not pl2_exists
 
     def test_unfollow_name_clash_no_prompt_all(self):
         """

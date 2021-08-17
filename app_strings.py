@@ -1,4 +1,5 @@
 class General:
+    specify_name_or_id = "You must specify NAME or ID"
     num_playlists_found = "{} playlist(s) found matching name {}"
     playlist_DNE = "Playlist {} appears to not exist!"
     operation_canceled = "Operation cancelled"
@@ -28,6 +29,11 @@ class Create:
     desc_status = "Description: {}"
 
 
+class Follow:
+    id_help = "Use id to specify playlist"
+    followed = "Followed playlist with name: {}, id: {}"
+
+
 class Unfollow:
     id_help = "Use id to specify playlist"
     no_prompt_help = (
@@ -40,7 +46,6 @@ class Unfollow:
         + "Only has effect if used with --no-prompt."
     )
 
-    specify_name_or_id = "You must specify NAME or ID"
     duplicates_found = (
         "Multiple playlists were found with name: {}."
         + "\nPlease use '--no-prompt' with '--all' to "

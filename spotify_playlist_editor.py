@@ -5,7 +5,7 @@ import typer
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 from spotify_utils import SpotifyExtended
-from app_strings import General, Create, Search, Unfollow
+from app_strings import General, Create, Search, Follow, Unfollow
 
 SCOPE = "playlist-modify-private \
     playlist-read-private \
@@ -15,6 +15,7 @@ SPOTIPY_CLIENT_ID = config("SPOTIPY_CLIENT_ID")
 SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
 
+# TODO: Caching? To reduce number of pings to api
 sp = SpotifyExtended(
     auth_manager=SpotifyOAuth(
         client_id=SPOTIPY_CLIENT_ID,
@@ -70,11 +71,13 @@ def create(
         typer.echo(Create.dupe_exists_no_force)
 
 
-# TODO: Caching? To reduce number of pings to api
-# TODO: add a "follow" command
-# Use:
-# user_playlist_is_following(playlist_owner_id, playlist_id, user_ids)
-# user_playlist_follow_playlist(playlist_owner_id, playlist_id)
+@app.command()
+def follow(pl_id: str = typer.Argument(..., help=Follow.id_help)):
+    """Follow a playlist"""
+    sp.current_user_follow_playlist(playlist_id=pl_id)
+    name = sp.get_playlist(pl_id=pl_id)[0]["name"]
+    typer.echo(Follow.followed.format(name, pl_id))
+    sys.exit(0)
 
 
 @app.command()
@@ -89,10 +92,11 @@ def unfollow(
     unfollow_all: bool = typer.Option(False, "--all", help=Unfollow.all_help),
 ):
     """
-    Unfollow (unfollow) a playlist from your library.
+    Unfollow a playlist; remove it from your library.
+    This "deletes" playlists you've created.
     """
     if name == "" and pl_id == "":
-        typer.echo(Unfollow.specify_name_or_id)
+        typer.echo(General.specify_name_or_id)
         sys.exit(1)
 
     # Retrieve any playlists matching 'name' or 'pl_id'
@@ -106,12 +110,7 @@ def unfollow(
 
         # If there is more than one playlist with the same name, list them out
         if len(playlists) > 1:
-            for playlist in playlists:
-                cur_name, cur_id, = (
-                    playlist["name"],
-                    playlist["id"],
-                )
-                print(f"{cur_name}, ID: {cur_id}")
+            sp.print_playlists(typer.echo, playlists)
 
     # Exit if there are duplicate playlist names and the right flags are not present
     if (
