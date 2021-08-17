@@ -16,6 +16,8 @@ SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
 
 # TODO: Caching? To reduce number of pings to api
+# TODO: Improve handling of when api calls timeout or fail. I don't account for api calls timing out, at all? So... 
+#
 sp = SpotifyExtended(
     auth_manager=SpotifyOAuth(
         client_id=SPOTIPY_CLIENT_ID,
