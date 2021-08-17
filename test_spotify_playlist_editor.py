@@ -1,7 +1,7 @@
 import re
 
 from typer.testing import CliRunner
-from app_strings import General, Create, Search, Delete
+from app_strings import General, Create, Search, Unfollow
 from spotify_utils import USE_DUMMY_WRAPPER
 from spotify_playlist_editor import sp, app
 
@@ -16,7 +16,7 @@ class TestCreate:
         pl_id = sp.get_pl_id(TEST_PL_NAME)[0]
         pl_exists = sp.check_exists(pl_id)
         # Clean up
-        sp.delete_all(TEST_PL_NAME)
+        sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert pl_exists
         assert result.exit_code == 0
@@ -27,7 +27,7 @@ class TestCreate:
         result = runner.invoke(app, ["create", TEST_PL_NAME])
 
         # Clean up
-        sp.delete_all(TEST_PL_NAME)
+        sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert result.exit_code == 0
         assert Create.dupe_exists_no_force in result.stdout
@@ -42,7 +42,7 @@ class TestCreate:
             pl_exists = sp.check_exists(cur_id)
 
         # Clean up
-        sp.delete_all(TEST_PL_NAME)
+        sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert pl_exists
         assert result.exit_code == 0
@@ -54,7 +54,7 @@ class TestCreate:
         pl_id = sp.get_pl_id(TEST_PL_NAME)[0]
         pl_exists = sp.check_exists(pl_id)
         # Clean up
-        sp.delete_all(TEST_PL_NAME)
+        sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert pl_exists
         assert result.exit_code == 0
@@ -66,7 +66,7 @@ class TestCreate:
         pl_id = sp.get_pl_id(TEST_PL_NAME)[0]
         pl_exists = sp.check_exists(pl_id)
         # Clean up
-        sp.delete_all(TEST_PL_NAME)
+        sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert pl_exists
         assert result.exit_code == 0
@@ -78,7 +78,7 @@ class TestCreate:
         pl_id = sp.get_pl_id(TEST_PL_NAME)[0]
         pl_exists = sp.check_exists(pl_id)
         # Clean up
-        sp.delete_playlist(pl_id)
+        sp.unfollow_playlist(pl_id)
 
         assert pl_exists
         assert result.exit_code == 0
@@ -86,65 +86,65 @@ class TestCreate:
         assert Create.collab_status.format("True") in result.stdout
 
 
-class TestDelete:
-    def test_delete_no_name_or_id(self):
-        result = runner.invoke(app, ["delete", "--no-prompt"])
+class TestUnfollow:
+    def test_unfollow_no_name_or_id(self):
+        result = runner.invoke(app, ["unfollow", "--no-prompt"])
         assert result.exit_code == 1
-        assert Delete.specify_name_or_id in result.stdout
+        assert Unfollow.specify_name_or_id in result.stdout
 
-    def test_delete_prompt_cancled(self):
+    def test_unfollow_prompt_cancled(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
-        result = runner.invoke(app, ["delete", TEST_PL_NAME], input="n\n")
+        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="n\n")
 
         # Cleanup
-        sp.delete_playlist(pl_id)
+        sp.unfollow_playlist(pl_id)
         assert result.exit_code == 0
         assert General.operation_canceled in result.stdout
 
-    def test_delete_prompt_approved(self):
+    def test_unfollow_prompt_approved(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\n")
+        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="y\n")
         pl_exists = sp.check_exists(pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            sp.delete_playlist(pl_id)
+            sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
-    def test_delete_by_id(self):
+    def test_unfollow_by_id(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", "--id", pl_id], input="y\n")
+        result = runner.invoke(app, ["unfollow", "--id", pl_id], input="y\n")
         pl_exists = sp.check_exists(pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            sp.delete_playlist(pl_id)
+            sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
-    def test_delete_no_prompt(self):
+    def test_unfollow_no_prompt(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", "--no-prompt", TEST_PL_NAME])
+        result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
         pl_exists = sp.check_exists(pl_id)
 
         # Cleanup, if needed
         if pl_exists:
-            sp.delete_playlist(pl_id)
+            sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Delete.deleted_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
-    def test_delete_playlist_DNE(self):
-        result = runner.invoke(app, ["delete", TEST_PL_NAME], input="y\n")
+    def test_unfollow_playlist_DNE(self):
+        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="y\n")
         assert result.exit_code == 1
         assert (
             f"Playlist with name: '{TEST_PL_NAME}' appears to not exist!"
@@ -152,7 +152,7 @@ class TestDelete:
         )
 
     # Commented out tests for possible future behavior.
-    # def test_delete_name_clash_prompt_select_single(self):
+    # def test_unfollow_name_clash_prompt_select_single(self):
     #     """
     #     Test deleting when multiple playlists share the same name.
     #     Prompt user if they want to proceed.
@@ -165,9 +165,9 @@ class TestDelete:
     #     pl_exists = check_exists(pl_id1)
 
     #     # Cleanup
-    #     delete_playlist(pl_id2)
+    #     unfollow_playlist(pl_id2)
     #     if pl_exists:
-    #         delete_playlist(pl_id1)
+    #         unfollow_playlist(pl_id1)
 
     #     assert result.exit_code == 0
     #     assert (
@@ -175,7 +175,7 @@ class TestDelete:
     #     )
     #     assert not pl_exists
 
-    # def test_delete_name_clash_prompt_select_all(self):
+    # def test_unfollow_name_clash_prompt_select_all(self):
     #     """
     #     Test deleting multiple playlists.
     #     Prompt user if they want to proceed.
@@ -190,9 +190,9 @@ class TestDelete:
 
     #     # Cleanup, if needed
     #     if pl1_exists:
-    #         delete_playlist(pl_id1)
+    #         unfollow_playlist(pl_id1)
     #     if pl2_exists:
-    #         delete_playlist(pl_id2)
+    #         unfollow_playlist(pl_id2)
 
     #     assert result.exit_code == 0
     #     assert (
@@ -201,66 +201,66 @@ class TestDelete:
     #     assert not pl1_exists
     #     assert not pl2_exists
 
-    def test_delete_name_clash_no_prompt_all(self):
+    def test_unfollow_name_clash_no_prompt_all(self):
         """
         Test deleting multiple playlists.
         Skip prompt with --no-prompt
-        Use --all flag to delete all.
+        Use --all flag to unfollow all.
         """
         pl_id1 = sp.create_playlist(TEST_PL_NAME)
         pl_id2 = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", "--no-prompt", "--all", TEST_PL_NAME])
+        result = runner.invoke(app, ["unfollow", "--no-prompt", "--all", TEST_PL_NAME])
         pl1_exists = sp.check_exists(pl_id1)
         pl2_exists = sp.check_exists(pl_id1)
 
         # Cleanup, if needed
         if pl1_exists:
-            sp.delete_playlist(pl_id1)
+            sp.unfollow_playlist(pl_id1)
         if pl2_exists:
-            sp.delete_playlist(pl_id2)
+            sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
         assert not pl1_exists
         assert not pl2_exists
 
-    def test_delete_name_clash_no_prompt_no_all(self):
+    def test_unfollow_name_clash_no_prompt_no_all(self):
         """
         Test deleting when multiple lists exist with same name and
         --no-prompt flag was used ()
         If multiple lists exist with given name, cli does not know
-        which to delete. It should exit with code 1, and tell user.
+        which to unfollow. It should exit with code 1, and tell user.
         """
         pl_id1 = sp.create_playlist(TEST_PL_NAME)
         pl_id2 = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", "--no-prompt", TEST_PL_NAME])
+        result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
 
         # Cleanup
-        sp.delete_playlist(pl_id1)
-        sp.delete_playlist(pl_id2)
+        sp.unfollow_playlist(pl_id1)
+        sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
+        assert Unfollow.duplicates_found.format(TEST_PL_NAME) in result.stdout
 
-    def test_delete_name_clash_prompt_all(self):
+    def test_unfollow_name_clash_prompt_all(self):
         """
         Test deleting when multiple lists exist with same name and
         --no-prompt flag was used ()
         If multiple lists exist with given name, cli does not know
-        which to delete. It should exit with code 1, and tell user.
+        which to unfollow. It should exit with code 1, and tell user.
         """
         pl_id1 = sp.create_playlist(TEST_PL_NAME)
         pl_id2 = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["delete", "--all", TEST_PL_NAME])
+        result = runner.invoke(app, ["unfollow", "--all", TEST_PL_NAME])
 
         # Cleanup
-        sp.delete_playlist(pl_id1)
-        sp.delete_playlist(pl_id2)
+        sp.unfollow_playlist(pl_id1)
+        sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert Delete.duplicates_found.format(TEST_PL_NAME) in result.stdout
+        assert Unfollow.duplicates_found.format(TEST_PL_NAME) in result.stdout
 
 
 class TestSearch:
@@ -274,7 +274,7 @@ class TestSearch:
         result = runner.invoke(app, ["search", TEST_PL_NAME])
 
         # Clean up
-        sp.delete_playlist(pl_id)
+        sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
         assert General.num_playlists_found.format(1, TEST_PL_NAME) in result.stdout
@@ -290,8 +290,8 @@ class TestSearch:
         result = runner.invoke(app, ["search", TEST_PL_NAME])
 
         # Clean up
-        sp.delete_playlist(pl_id1)
-        sp.delete_playlist(pl_id2)
+        sp.unfollow_playlist(pl_id1)
+        sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
         assert General.num_playlists_found.format(2, TEST_PL_NAME) in result.stdout

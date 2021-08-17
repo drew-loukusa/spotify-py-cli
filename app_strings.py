@@ -28,15 +28,15 @@ class Create:
     desc_status = "Description: {}"
 
 
-class Delete:
+class Unfollow:
     id_help = "Use id to specify playlist"
     no_prompt_help = (
-        "Do not prompt user to confirm deletion. Will be ignored if NAME "
+        "Do not prompt user to confirm unfollow. Will be ignored if NAME "
         + "is supplied and multiple playlists exist with the same name.\n"
         + "See '--all' for deleting multiple lists that share the same name."
     )
     all_help = (
-        "If multiple lists are found that share the same name, delete all. "
+        "If multiple lists are found that share the same name, unfollow all. "
         + "Only has effect if used with --no-prompt."
     )
 
@@ -44,13 +44,13 @@ class Delete:
     duplicates_found = (
         "Multiple playlists were found with name: {}."
         + "\nPlease use '--no-prompt' with '--all' to "
-        + "delete all, or specify with '--id' which playlist to delete."
+        + "unfollow all, or specify with '--id' which playlist to unfollow."
     )
 
-    confirm_delete = "Are you sure you want to delete the playlist {}?"
+    confirm_unfollow = "Are you sure you want to unfollow the playlist {}?"
 
-    deleted_all = "Deleted all playlists associated with name: {}"
-    deleted_playlist = "Deleted playlist: {}, ID: {}"
+    unfollowed_all = "unfollowed all playlists associated with name: {}"
+    unfollowed_playlist = "unfollowed playlist: {}, ID: {}"
 
 
 class Search:

@@ -5,7 +5,7 @@ import typer
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 from spotify_utils import SpotifyExtended
-from app_strings import General, Create, Search, Delete
+from app_strings import General, Create, Search, Unfollow
 
 SCOPE = "playlist-modify-private \
     playlist-read-private \
@@ -72,32 +72,27 @@ def create(
 
 # TODO: Caching? To reduce number of pings to api
 # TODO: add a "follow" command
-# TODO: Before I can add a follow command, I need to implement searching through PUBLIC playlists
-#       I need to update 'search' to search:
-#           > Just a user's followed + created, playlists
-#           > Public playlists
-#           Add a flag to do this. Default should be...?
 # Use:
 # user_playlist_is_following(playlist_owner_id, playlist_id, user_ids)
 # user_playlist_follow_playlist(playlist_owner_id, playlist_id)
 
 
 @app.command()
-def delete(
+def unfollow(
     name: str = typer.Argument(""),
-    pl_id: str = typer.Option("", "--id", help=Delete.id_help),
+    pl_id: str = typer.Option("", "--id", help=Unfollow.id_help),
     no_prompt: bool = typer.Option(
         False,
         "--no-prompt",
-        help=Delete.no_prompt_help,
+        help=Unfollow.no_prompt_help,
     ),
-    delete_all: bool = typer.Option(False, "--all", help=Delete.all_help),
+    unfollow_all: bool = typer.Option(False, "--all", help=Unfollow.all_help),
 ):
     """
-    Delete (unfollow) a playlist from your library.
+    Unfollow (unfollow) a playlist from your library.
     """
     if name == "" and pl_id == "":
-        typer.echo(Delete.specify_name_or_id)
+        typer.echo(Unfollow.specify_name_or_id)
         sys.exit(1)
 
     # Retrieve any playlists matching 'name' or 'pl_id'
@@ -119,8 +114,12 @@ def delete(
                 print(f"{cur_name}, ID: {cur_id}")
 
     # Exit if there are duplicate playlist names and the right flags are not present
-    if playlists is not None and len(playlists) > 1 and not (delete_all and no_prompt):
-        typer.echo(Delete.duplicates_found.format(name))
+    if (
+        playlists is not None
+        and len(playlists) > 1
+        and not (unfollow_all and no_prompt)
+    ):
+        typer.echo(Unfollow.duplicates_found.format(name))
         sys.exit(0)
 
     # Exit if the name or id given does not match any given playlist
@@ -130,26 +129,26 @@ def delete(
         typer.echo(General.operation_canceled)
         sys.exit(1)
 
-    # If '--no-prompt' was not used, confirm delete with user
-    confirm_delete = False
+    # If '--no-prompt' was not used, confirm Unfollow with user
+    confirm_Unfollow = False
     if not no_prompt:
-        confirm_delete = typer.confirm(text=Delete.confirm_delete.format(label))
+        confirm_Unfollow = typer.confirm(text=Unfollow.confirm_unfollow.format(label))
     else:
-        confirm_delete = True
+        confirm_Unfollow = True
 
-    if confirm_delete:
+    if confirm_Unfollow:
         pl_name = None if name == "" else name
         pl_id = None if pl_id == "" else pl_id
         if playlists is not None and len(playlists) == 1:
             pl_id = playlists[0]["id"]
             pl_name = playlists[0]["name"]
 
-        if delete_all:
-            sp.delete_all(pl_name=name)
-            typer.echo(Delete.deleted_all.format(pl_name))
+        if unfollow_all:
+            sp.unfollow_all_pl(pl_name=name)
+            typer.echo(Unfollow.unfollowed_all.format(pl_name))
         else:
-            sp.delete_playlist(pl_id)
-            typer.echo(Delete.deleted_playlist.format(pl_name, pl_id))
+            sp.unfollow_playlist(pl_id)
+            typer.echo(Unfollow.unfollowed_playlist.format(pl_name, pl_id))
         sys.exit(0)
 
     typer.echo(General.operation_canceled)

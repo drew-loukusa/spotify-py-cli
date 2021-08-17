@@ -67,12 +67,12 @@ class SpotifyExtended(BaseClass):
             for pl_list in playlists:
                 print(pl_list["name"], pl_list["id"])
 
-    def delete_playlist(self, pl_id: str) -> None:
-        """Attempts to delete the playlist with the id 'pl_id'"""
+    def unfollow_playlist(self, pl_id: str) -> None:
+        """Attempts to unfollow the playlist with the id 'pl_id'"""
         self.current_user_unfollow_playlist(playlist_id=pl_id)
 
-    def delete_all(self, pl_name: str) -> None:
-        """Attempts to delete all playlists with the same name"""
+    def unfollow_all_pl(self, pl_name: str) -> None:
+        """Attempts to unfollow all playlists with the same name"""
         playlists = self.get_playlist(pl_name=pl_name)
         if playlists is not None:
             for playlist in playlists:
