@@ -1,4 +1,4 @@
-"""A CLI app for managing your Spotify playlists. It's not very good yet, so please be patient."""
+"""A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
 import sys
 import typer
@@ -16,7 +16,7 @@ SPOTIPY_CLIENT_SECRET = config("SPOTIPY_CLIENT_SECRET")
 SPOTIPY_REDIRECT_URI = config("SPOTIPY_REDIRECT_URI")
 
 # TODO: Caching? To reduce number of pings to api
-# TODO: Improve handling of when api calls timeout or fail. I don't account for api calls timing out, at all? So... 
+# TODO: Improve handling of when api calls timeout or fail. I don't account for api calls timing out, at all? So...
 #
 sp = SpotifyExtended(
     auth_manager=SpotifyOAuth(
@@ -33,8 +33,7 @@ app = typer.Typer()
 @app.callback()
 def callback():
     """
-    A CLI app for managing your Spotify playlists.
-    It's not very good yet, so please be patient.
+    A CLI app for interacting with Spotify. It's a work in progress, so please be patient.
     """
 
 

@@ -4,7 +4,7 @@ import re
 from typer.testing import CliRunner
 from app_strings import General, Create, Search, Unfollow, Follow
 from spotify_utils import USE_DUMMY_WRAPPER
-from spotify_playlist_editor import sp, app
+from spotify_cli import sp, app
 
 runner = CliRunner()
 
