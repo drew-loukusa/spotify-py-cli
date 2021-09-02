@@ -1,6 +1,7 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
 import sys
+import spotipy
 import typer
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth

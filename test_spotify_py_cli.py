@@ -89,10 +89,11 @@ class TestCreate:
 
 class TestFollow:
     def test_follow_by_id(self):
-        test_name = "Liquid Drum & Bass"
+        test_name = "Massive Drum & Bass"
         pl_id = "37i9dQZF1DX5wDmLW735Yd"
 
-        if sp.following_playlist(pl_id):
+        was_following = sp.following_playlist(pl_id)
+        if was_following:
             sp.unfollow_playlist(pl_id)
 
         if USE_DUMMY_WRAPPER:
@@ -102,7 +103,7 @@ class TestFollow:
         following = sp.following_playlist(pl_id)
 
         # Cleanup
-        if following:
+        if following and not was_following:
             sp.unfollow_playlist(pl_id)
 
         assert following
