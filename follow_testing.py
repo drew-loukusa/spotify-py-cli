@@ -1,6 +1,7 @@
 from time import sleep
 import spotipy
 import pprint
+
 # import textwrap
 # from spotify_utils import *
 from spotipy.oauth2 import SpotifyOAuth
@@ -18,7 +19,7 @@ if res[0]:
     sleep(1)
     sp.user_playlist_unfollow(sp.me()["id"], playlist_id)
 
-#result = sp.current_user_follow_playlist(playlist_id=playlist_id)
+# result = sp.current_user_follow_playlist(playlist_id=playlist_id)
 
 
 # pprint.pprint(result)

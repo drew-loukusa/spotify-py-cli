@@ -90,7 +90,8 @@ def unfollow(
         if len(playlists) > 1:
             sp.print_playlists(typer.echo, playlists)
 
-    # Exit if there are duplicate playlist names and the right flags are not present
+    # Exit if there are duplicate playlist names
+    # and the right flags are not present
     if (
         playlists is not None
         and len(playlists) > 1
@@ -146,7 +147,9 @@ def search(
     """
     if name == "":
         typer.echo(Search.list_all)
-        sp.print_playlists(typer.echo, sp.get_user_playlists())
+        sp.print_playlists(
+            print_func=typer.echo, playlists=sp.get_user_playlists()
+        )
 
     # Search through user created playlists, and user followed playlists
     elif not public:
@@ -156,12 +159,14 @@ def search(
             sys.exit(1)
         else:
             typer.echo(General.num_plist_found.format(len(playlists), name))
-            sp.print_playlists(typer.echo, playlists)
+            sp.print_playlists(print_func=typer.echo, playlists=playlists)
 
     # Search through all public playlists
     else:
         typer.echo(Search.search_pub)
-        playlists = sp.search_public_playlist(name, limit=limit, market=market)
+        playlists = sp.search_public_playlist(
+            query=name, limit=limit, market=market
+        )
 
         typer.echo(Search.num_public.format(len(playlists), name))
         sp.print_playlists(typer.echo, playlists)

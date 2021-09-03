@@ -8,7 +8,9 @@ class General:
 
 class Create:
     # Help strings for options
-    force_help = "Create the playlist, even if one already exists with name NAME"
+    force_help = (
+        "Create the playlist, even if one already exists with name NAME"
+    )
     collab_help = "Is the created playlist collaborative"
     desc_help = "Playlist description."
     public_help = "Is the created playlist public"
@@ -59,10 +61,10 @@ class Unfollow:
 
 
 class Search:
-    public_help = (
-        "Search public playlists instead of user's followed and created playlists"
+    public_help = "Search public playlists instead of user's followed and created playlists"
+    limit_help = (
+        "The number of items to return (min = 1, default = 10, max = 50)"
     )
-    limit_help = "The number of items to return (min = 1, default = 10, max = 50)"
     market_help = "An ISO 3166-1 alpha-2 country code or the string"
 
     list_all = (

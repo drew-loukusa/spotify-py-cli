@@ -31,7 +31,9 @@ class DummySpotipy:
                 "display_name": f"test_owner_name{sp.pl_id_count}",
                 "id": f"test_owner_id{sp.pl_id_count}",
             },
-            "external_urls": {"spotify": f"test_external_url{sp.pl_id_count}.com"},
+            "external_urls": {
+                "spotify": f"test_external_url{sp.pl_id_count}.com"
+            },
         }
         sp.non_followed_playlists["items"].append(pl)
 
@@ -59,7 +61,9 @@ class DummySpotipy:
                 "display_name": f"test_owner_name{self.pl_id_count}",
                 "id": f"test_owner_id{self.pl_id_count}",
             },
-            "external_urls": {"spotify": f"test_external_url{self.pl_id_count}.com"},
+            "external_urls": {
+                "spotify": f"test_external_url{self.pl_id_count}.com"
+            },
         }
         self.playlists["items"].append(pl)
         result = {"id": pl_id}

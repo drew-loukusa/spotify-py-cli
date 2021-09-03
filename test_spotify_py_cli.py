@@ -136,7 +136,10 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert (
+            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
         assert not pl_exists
 
     def test_unfollow_by_id(self):
@@ -150,7 +153,10 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert (
+            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
         assert not pl_exists
 
     def test_unfollow_no_prompt(self):
@@ -164,7 +170,10 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert (
+            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
         assert not pl_exists
 
     def test_unfollow_playlist_DNE(self):
@@ -184,7 +193,9 @@ class TestUnfollow:
         pl_id1 = sp.create_playlist(TEST_PL_NAME)
         pl_id2 = sp.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(app, ["unfollow", "--no-prompt", "--all", TEST_PL_NAME])
+        result = runner.invoke(
+            app, ["unfollow", "--no-prompt", "--all", TEST_PL_NAME]
+        )
         pl1_exists = sp.check_exists(pl_id1)
         pl2_exists = sp.check_exists(pl_id1)
 
@@ -273,7 +284,9 @@ class TestSearch:
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:
             sp.create_playlist("Massive Drum & Bass")
-        result = runner.invoke(app, ["search", "Massive Drum & Bass", "--public"])
+        result = runner.invoke(
+            app, ["search", "Massive Drum & Bass", "--public"]
+        )
 
         assert result.exit_code == 0
         assert Search.search_pub in result.stdout

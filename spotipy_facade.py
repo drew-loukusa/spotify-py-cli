@@ -84,7 +84,7 @@ class SpotipySpotifyFacade(BaseClass):
     def follow_playlist(self, pl_id):
         self.current_user_follow_playlist(playlist_id=pl_id)
         name = self.get_playlist(pl_id=pl_id)[0]["name"]
-        return name 
+        return name
 
     def unfollow_playlist(self, pl_id: str) -> None:
         """Attempts to unfollow the playlist with the id 'pl_id'"""
@@ -97,12 +97,6 @@ class SpotipySpotifyFacade(BaseClass):
             for playlist in playlists:
                 pl_id, pl_name = playlist["id"], playlist["name"]
                 self.current_user_unfollow_playlist(playlist_id=pl_id)
-
-    # I'd assume there is a better way to do this.
-    # However, how many users are going to have > 100 playlists?
-    # Not many. And even the outliers probably have < 1000 playlists.
-    # Search in a linear fashion through < 1000 vaules is easy for a computer.
-    # Might improve this at some point, but for now it's fine. TODO maybe.
 
     def check_exists(self, pl_id: str) -> bool:
         """Checks if a playlist exists."""
@@ -124,7 +118,9 @@ class SpotipySpotifyFacade(BaseClass):
             return id_list
         return None
 
-    def get_playlist(self, pl_name: str = None, pl_id: str = None) -> List[dict]:
+    def get_playlist(
+        self, pl_name: str = None, pl_id: str = None
+    ) -> List[dict]:
         """
         Attempts to retrieve all info related to a given playlist.
         Accepts playlist name or id as ways of getting the playlist.
@@ -167,10 +163,10 @@ class SpotipySpotifyFacade(BaseClass):
         return "\n".join(info)
 
     @staticmethod
-    def print_playlists(print_function, playlists):
+    def print_playlists(print_func, playlists):
         if playlists is None:
-            print_function("No playlists to print!")
+            print_func("No playlists to print!")
             return
 
         for pl_list in playlists:
-            print_function(SpotipySpotifyFacade.stringify_playlist(pl_list))
+            print_func(SpotipySpotifyFacade.stringify_playlist(pl_list))
