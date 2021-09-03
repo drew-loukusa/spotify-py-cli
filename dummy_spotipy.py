@@ -41,7 +41,7 @@ class DummySpotipy:
 
     def user_playlist_create(
         self,
-        user_id,
+        user,
         name,
         public,
         collaborative,
@@ -68,7 +68,7 @@ class DummySpotipy:
         result = {"id": pl_id}
         return result
 
-    def user_playlists(self, user_id):
+    def user_playlists(self, user):
         return self.playlists
 
     def current_user_follow_playlist(self, playlist_id):

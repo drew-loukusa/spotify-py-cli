@@ -55,7 +55,7 @@ class SpotipySpotifyFacade:
         Returns the playlist id if successful.
         """
         result = self.sp.user_playlist_create(
-            user_id=self.user_id,
+            user=self.user_id,
             name=name,
             public=public,
             collaborative=collaborative,
