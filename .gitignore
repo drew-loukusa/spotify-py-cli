@@ -2,6 +2,7 @@ secrets.ps1
 .vscode/
 .env
 scripts
+scratch.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
