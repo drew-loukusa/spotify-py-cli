@@ -1,8 +1,8 @@
 class General:
-    specify_name_or_id = "You must specify NAME or ID"
-    num_playlists_found = "{} playlist(s) found matching name {}"
-    playlist_DNE = "Playlist {} appears to not exist!"
-    operation_canceled = "Operation cancelled"
+    spec_name_id = "You must specify NAME or ID"
+    num_plist_found = "{} playlist(s) found matching name {}"
+    plist_DNE = "Playlist {} appears to not exist!"
+    op_canceled = "Operation cancelled"
     not_found = "Could not find {} in user's playlists."
 
 
@@ -14,9 +14,9 @@ class Create:
     public_help = "Is the created playlist public"
 
     # Command completion info
-    playlist_created = "Playlist created."
-    duplicate_created = "Playlist with duplicate name created."
-    dupe_exists_no_force = (
+    plist_created = "Playlist created."
+    dupe_created = "Playlist with duplicate name created."
+    dupe_exist_no_f = (
         "A playlist with that name already exists.\n"
         + "Choose a diffrent name or use '--force'"
         + "to create a playlist with the same name "
@@ -46,16 +46,16 @@ class Unfollow:
         + "Only has effect if used with --no-prompt."
     )
 
-    duplicates_found = (
+    dupes_found = (
         "Multiple playlists were found with name: {}."
         + "\nPlease use '--no-prompt' with '--all' to "
         + "unfollow all, or specify with '--id' which playlist to unfollow."
     )
 
-    confirm_unfollow = "Are you sure you want to unfollow the playlist {}?"
+    confirm = "Are you sure you want to unfollow the playlist {}?"
 
     unfollowed_all = "unfollowed all playlists associated with name: {}"
-    unfollowed_playlist = "unfollowed playlist: {}, ID: {}"
+    unfollowed_plist = "unfollowed playlist: {}, ID: {}"
 
 
 class Search:
@@ -65,11 +65,11 @@ class Search:
     limit_help = "The number of items to return (min = 1, default = 10, max = 50)"
     market_help = "An ISO 3166-1 alpha-2 country code or the string"
 
-    listing_all = (
+    list_all = (
         "No name provided, listing all playlists (user created and followed)..."
     )
-    playlist_DNE = "Could not find {} in user's playlists."
+    plist_DNE = "Could not find {} in user's playlists."
     show_info = "{}, ID: {}\nDescription:\n{}"
 
-    search_public = "Searching public playlists..."
+    search_pub = "Searching public playlists..."
     num_public = "Found {} playlists matching the search query: '{}'"

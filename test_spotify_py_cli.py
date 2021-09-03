@@ -1,9 +1,9 @@
-from dummy_spotipy import DummySpotipy
 import re
 
 from typer.testing import CliRunner
 from app_strings import General, Create, Search, Unfollow, Follow
-from spotify_utils import USE_DUMMY_WRAPPER
+from dummy_spotipy import DummySpotipy
+from spotipy_facade import USE_DUMMY_WRAPPER
 from spotify_cli import sp, app
 
 runner = CliRunner()
@@ -21,7 +21,7 @@ class TestCreate:
 
         assert pl_exists
         assert result.exit_code == 0
-        assert Create.playlist_created in result.stdout
+        assert Create.plist_created in result.stdout
 
     def test_create_name_clash_no_force(self):
         sp.create_playlist(TEST_PL_NAME)
@@ -31,7 +31,7 @@ class TestCreate:
         sp.unfollow_all_pl(TEST_PL_NAME)
 
         assert result.exit_code == 0
-        assert Create.dupe_exists_no_force in result.stdout
+        assert Create.dupe_exist_no_f in result.stdout
 
     def test_create_name_clash_force(self):
         sp.create_playlist(TEST_PL_NAME)
@@ -47,7 +47,7 @@ class TestCreate:
 
         assert pl_exists
         assert result.exit_code == 0
-        assert Create.duplicate_created in result.stdout
+        assert Create.dupe_created in result.stdout
 
     def test_create_with_description(self):
         desc = "A test playlist"
@@ -59,7 +59,7 @@ class TestCreate:
 
         assert pl_exists
         assert result.exit_code == 0
-        assert Create.playlist_created in result.stdout
+        assert Create.plist_created in result.stdout
         assert Create.desc_status.format(desc) in result.stdout
 
     def test_create_public(self):
@@ -71,7 +71,7 @@ class TestCreate:
 
         assert pl_exists
         assert result.exit_code == 0
-        assert Create.playlist_created in result.stdout
+        assert Create.plist_created in result.stdout
         assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
@@ -83,7 +83,7 @@ class TestCreate:
 
         assert pl_exists
         assert result.exit_code == 0
-        assert Create.playlist_created in result.stdout
+        assert Create.plist_created in result.stdout
         assert Create.collab_status.format("True") in result.stdout
 
 
@@ -114,7 +114,7 @@ class TestUnfollow:
     def test_unfollow_no_name_or_id(self):
         result = runner.invoke(app, ["unfollow", "--no-prompt"])
         assert result.exit_code == 1
-        assert General.specify_name_or_id in result.stdout
+        assert General.spec_name_id in result.stdout
 
     def test_unfollow_prompt_cancled(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
@@ -123,7 +123,7 @@ class TestUnfollow:
         # Cleanup
         sp.unfollow_playlist(pl_id)
         assert result.exit_code == 0
-        assert General.operation_canceled in result.stdout
+        assert General.op_canceled in result.stdout
 
     def test_unfollow_prompt_approved(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
@@ -136,7 +136,7 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
     def test_unfollow_by_id(self):
@@ -150,7 +150,7 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
     def test_unfollow_no_prompt(self):
@@ -164,7 +164,7 @@ class TestUnfollow:
             sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert Unfollow.unfollowed_playlist.format(TEST_PL_NAME, pl_id) in result.stdout
+        assert Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id) in result.stdout
         assert not pl_exists
 
     def test_unfollow_playlist_DNE(self):
@@ -215,7 +215,7 @@ class TestUnfollow:
         sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert Unfollow.duplicates_found.format(TEST_PL_NAME) in result.stdout
+        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
 
     def test_unfollow_name_clash_prompt_all(self):
         """
@@ -234,14 +234,14 @@ class TestUnfollow:
         sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert Unfollow.duplicates_found.format(TEST_PL_NAME) in result.stdout
+        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
 
 
 class TestSearch:
     def test_search_no_name_provided(self):
         result = runner.invoke(app, ["search"])
         assert result.exit_code == 0
-        assert Search.listing_all in result.stdout
+        assert Search.list_all in result.stdout
 
     def test_search_name_provided_and_playlist_exists(self):
         pl_id = sp.create_playlist(TEST_PL_NAME)
@@ -251,7 +251,7 @@ class TestSearch:
         sp.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert General.num_playlists_found.format(1, TEST_PL_NAME) in result.stdout
+        assert General.num_plist_found.format(1, TEST_PL_NAME) in result.stdout
 
     def test_search_name_provided_and_playlist_DNE(self):
         result = runner.invoke(app, ["search", TEST_PL_NAME])
@@ -268,7 +268,7 @@ class TestSearch:
         sp.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert General.num_playlists_found.format(2, TEST_PL_NAME) in result.stdout
+        assert General.num_plist_found.format(2, TEST_PL_NAME) in result.stdout
 
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:
@@ -276,7 +276,7 @@ class TestSearch:
         result = runner.invoke(app, ["search", "Massive Drum & Bass", "--public"])
 
         assert result.exit_code == 0
-        assert Search.search_public in result.stdout
+        assert Search.search_pub in result.stdout
         pattern = Search.num_public.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
@@ -289,7 +289,7 @@ class TestSearch:
         )
 
         assert result.exit_code == 0
-        assert Search.search_public in result.stdout
+        assert Search.search_pub in result.stdout
         pattern = Search.num_public.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
@@ -302,7 +302,7 @@ class TestSearch:
         )
 
         assert result.exit_code == 0
-        assert Search.search_public in result.stdout
+        assert Search.search_pub in result.stdout
         pattern = Search.num_public.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)

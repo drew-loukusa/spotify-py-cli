@@ -3,22 +3,35 @@ import textwrap
 from typing import List
 import spotipy
 from decouple import config
+from spotipy.oauth2 import SpotifyOAuth
 from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
+SCOPE = "playlist-modify-private \
+            playlist-read-private \
+            playlist-read-collaborative \
+            playlist-modify-public"
+
 
 # Inherit from a dummy wrapper for fast local testing
 BaseClass = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
 
-class SpotifyExtended(BaseClass):
+class SpotipySpotifyFacade(BaseClass):
     """
-    This class mostly contains functions for dealing with Spotify playlists.
-    It might do more in the future.
+    A facade for simplifying interaction with spotipy's Spotify object.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        auth_manager = SpotifyOAuth(
+            client_id=config("SPOTIPY_CLIENT_ID"),
+            client_secret=config("SPOTIPY_CLIENT_SECRET"),
+            redirect_uri=config("SPOTIPY_REDIRECT_URI"),
+            scope=SCOPE,
+        )
+
+        super().__init__(auth_manager)
+        self.user_id = self.me()["id"]
 
     def search_public_playlist(self, query, limit=10, market=None):
         """Search public playlists."""
@@ -41,9 +54,8 @@ class SpotifyExtended(BaseClass):
         Attempts to create a playlist with the given name.
         Returns the playlist id if successful.
         """
-        user_id = self.me()["id"]
         result = self.user_playlist_create(
-            user_id,
+            user_id=self.user_id,
             name=name,
             public=public,
             collaborative=collaborative,
@@ -53,8 +65,7 @@ class SpotifyExtended(BaseClass):
 
     def get_user_playlists(self):
         """Gets all of a users playlists"""
-        user_id = self.me()["id"]
-        res = self.user_playlists(user_id)
+        res = self.user_playlists(self.user_id)
         if res is not None:
             return res["items"]
         return res
@@ -68,7 +79,12 @@ class SpotifyExtended(BaseClass):
                 print(pl_list["name"], pl_list["id"])
 
     def following_playlist(self, playlist_id):
-        return self.playlist_is_following(playlist_id, [self.me()["id"]])[0]
+        return self.playlist_is_following(playlist_id, [self.user_id])[0]
+
+    def follow_playlist(self, pl_id):
+        self.current_user_follow_playlist(playlist_id=pl_id)
+        name = self.get_playlist(pl_id=pl_id)[0]["name"]
+        return name 
 
     def unfollow_playlist(self, pl_id: str) -> None:
         """Attempts to unfollow the playlist with the id 'pl_id'"""
@@ -117,8 +133,7 @@ class SpotifyExtended(BaseClass):
         Returns a list of dicts if the playlist exists (or multiple with the
         same name do).
         """
-        user_id = self.me()["id"]
-        playlists = self.user_playlists(user_id)
+        playlists = self.user_playlists(self.user_id)
         selected_playlists = []
         for playlist in playlists["items"]:
             name, cur_id = playlist["name"], playlist["id"]
@@ -158,4 +173,4 @@ class SpotifyExtended(BaseClass):
             return
 
         for pl_list in playlists:
-            print_function(SpotifyExtended.stringify_playlist(pl_list))
+            print_function(SpotipySpotifyFacade.stringify_playlist(pl_list))
