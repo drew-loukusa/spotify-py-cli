@@ -1,12 +1,11 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
-
 import sys
 import typer
 from spotipy_facade import SpotipySpotifyFacade
 from app_strings import General, Create, Search, Follow, Unfollow
 
 
-sp = SpotipySpotifyFacade()
+spot = SpotipySpotifyFacade()
 app = typer.Typer()
 
 
@@ -30,11 +29,11 @@ def create(
     """
 
     # Check if name is already in use
-    playlist = sp.get_playlist(pl_name=name)
+    playlist = spot.get_playlist(pl_name=name)
     name_exists = playlist is not None
 
     if not name_exists or force:
-        sp.create_playlist(
+        spot.create_playlist(
             name=name,
             public=public,
             collaborative=collab,
@@ -55,7 +54,7 @@ def create(
 @app.command()
 def follow(pl_id: str = typer.Argument(..., help=Follow.id_help)):
     """Follow a playlist"""
-    name = sp.follow_playlist(pl_id=pl_id)
+    name = spot.follow_playlist(pl_id=pl_id)
     typer.echo(Follow.followed.format(name, pl_id))
     sys.exit(0)
 
@@ -80,7 +79,7 @@ def unfollow(
         sys.exit(1)
 
     # Retrieve any playlists matching 'name' or 'pl_id'
-    playlists = sp.get_playlist(pl_name=name, pl_id=pl_id)
+    playlists = spot.get_playlist(pl_name=name, pl_id=pl_id)
 
     # Report how many playlist were found matching 'name' if name was used
     if pl_id == "" and playlists is not None:
@@ -88,7 +87,7 @@ def unfollow(
 
         # If there is more than one playlist with the same name, list them out
         if len(playlists) > 1:
-            sp.print_playlists(typer.echo, playlists)
+            spot.print_playlists(typer.echo, playlists)
 
     # Exit if there are duplicate playlist names
     # and the right flags are not present
@@ -122,10 +121,10 @@ def unfollow(
             pl_name = playlists[0]["name"]
 
         if unfollow_all:
-            sp.unfollow_all_pl(pl_name=name)
+            spot.unfollow_all_pl(pl_name=name)
             typer.echo(Unfollow.unfollowed_all.format(pl_name))
         else:
-            sp.unfollow_playlist(pl_id)
+            spot.unfollow_playlist(pl_id)
             typer.echo(Unfollow.unfollowed_plist.format(pl_name, pl_id))
         sys.exit(0)
 
@@ -147,29 +146,29 @@ def search(
     """
     if name == "":
         typer.echo(Search.list_all)
-        sp.print_playlists(
-            print_func=typer.echo, playlists=sp.get_user_playlists()
+        spot.print_playlists(
+            print_func=typer.echo, playlists=spot.get_user_playlists()
         )
 
     # Search through user created playlists, and user followed playlists
     elif not public:
-        playlists = sp.get_playlist(name)
+        playlists = spot.get_playlist(name)
         if playlists is None:
             typer.echo(Search.plist_DNE.format(name))
             sys.exit(1)
         else:
             typer.echo(General.num_plist_found.format(len(playlists), name))
-            sp.print_playlists(print_func=typer.echo, playlists=playlists)
+            spot.print_playlists(print_func=typer.echo, playlists=playlists)
 
     # Search through all public playlists
     else:
         typer.echo(Search.search_pub)
-        playlists = sp.search_public_playlist(
+        playlists = spot.search_public_playlist(
             query=name, limit=limit, market=market
         )
 
         typer.echo(Search.num_public.format(len(playlists), name))
-        sp.print_playlists(typer.echo, playlists)
+        spot.print_playlists(typer.echo, playlists)
 
 
 if __name__ == "__main__":

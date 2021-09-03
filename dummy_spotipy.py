@@ -14,28 +14,27 @@ class DummySpotipy:
         self.non_followed_playlists = {"items": []}
         self.pl_dict = {}
 
-    @staticmethod
-    def create_non_followed_playlist(sp, name, id=None):
-        pl_id = "123_fake_playlist_id" + str(sp.pl_id_count)
+    def create_non_followed_playlist(self, name, id=None):
+        pl_id = "123_fake_playlist_id" + str(self.pl_id_count)
         if id is not None:
             pl_id = id
-        sp.pl_id_count += 1
+        self.pl_id_count += 1
         pl = {
             "name": name,
             "id": pl_id,
             "public": "False",
             "collaborative": "False",
             "description": "No description.",
-            "tracks": {"total": sp.pl_id_count},
+            "tracks": {"total": self.pl_id_count},
             "owner": {
-                "display_name": f"test_owner_name{sp.pl_id_count}",
-                "id": f"test_owner_id{sp.pl_id_count}",
+                "display_name": f"test_owner_name{self.pl_id_count}",
+                "id": f"test_owner_id{self.pl_id_count}",
             },
             "external_urls": {
-                "spotify": f"test_external_url{sp.pl_id_count}.com"
+                "spotify": f"test_external_url{self.pl_id_count}.com"
             },
         }
-        sp.non_followed_playlists["items"].append(pl)
+        self.non_followed_playlists["items"].append(pl)
 
     def me(self):
         return self.data

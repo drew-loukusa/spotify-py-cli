@@ -13,30 +13,30 @@ SCOPE = "playlist-modify-private \
             playlist-modify-public"
 
 
-# Inherit from a dummy wrapper for fast local testing
-BaseClass = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
+# If testing locally, use the dummy wrapper
+SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
 
-class SpotipySpotifyFacade(BaseClass):
+class SpotipySpotifyFacade:
     """
     A facade for simplifying interaction with spotipy's Spotify object.
     """
 
     def __init__(self):
-        auth_manager = SpotifyOAuth(
-            client_id=config("SPOTIPY_CLIENT_ID"),
-            client_secret=config("SPOTIPY_CLIENT_SECRET"),
-            redirect_uri=config("SPOTIPY_REDIRECT_URI"),
-            scope=SCOPE,
+        self.sp = SpotifyWrapper(
+            auth_manager=SpotifyOAuth(
+                client_id=config("SPOTIPY_CLIENT_ID"),
+                client_secret=config("SPOTIPY_CLIENT_SECRET"),
+                redirect_uri=config("SPOTIPY_REDIRECT_URI"),
+                scope=SCOPE,
+            )
         )
-
-        super().__init__(auth_manager)
-        self.user_id = self.me()["id"]
+        self.user_id = self.sp.me()["id"]
 
     def search_public_playlist(self, query, limit=10, market=None):
         """Search public playlists."""
         query = query.replace(" ", "+")
-        results = self.search(
+        results = self.sp.search(
             q=query, limit=limit, offset=0, type="playlist", market=market
         )
         if results is not None:
@@ -54,7 +54,7 @@ class SpotipySpotifyFacade(BaseClass):
         Attempts to create a playlist with the given name.
         Returns the playlist id if successful.
         """
-        result = self.user_playlist_create(
+        result = self.sp.user_playlist_create(
             user_id=self.user_id,
             name=name,
             public=public,
@@ -65,7 +65,7 @@ class SpotipySpotifyFacade(BaseClass):
 
     def get_user_playlists(self):
         """Gets all of a users playlists"""
-        res = self.user_playlists(self.user_id)
+        res = self.sp.user_playlists(self.user_id)
         if res is not None:
             return res["items"]
         return res
@@ -79,16 +79,16 @@ class SpotipySpotifyFacade(BaseClass):
                 print(pl_list["name"], pl_list["id"])
 
     def following_playlist(self, playlist_id):
-        return self.playlist_is_following(playlist_id, [self.user_id])[0]
+        return self.sp.playlist_is_following(playlist_id, [self.user_id])[0]
 
     def follow_playlist(self, pl_id):
-        self.current_user_follow_playlist(playlist_id=pl_id)
+        self.sp.current_user_follow_playlist(playlist_id=pl_id)
         name = self.get_playlist(pl_id=pl_id)[0]["name"]
         return name
 
     def unfollow_playlist(self, pl_id: str) -> None:
         """Attempts to unfollow the playlist with the id 'pl_id'"""
-        self.current_user_unfollow_playlist(playlist_id=pl_id)
+        self.sp.current_user_unfollow_playlist(playlist_id=pl_id)
 
     def unfollow_all_pl(self, pl_name: str) -> None:
         """Attempts to unfollow all playlists with the same name"""
@@ -96,7 +96,7 @@ class SpotipySpotifyFacade(BaseClass):
         if playlists is not None:
             for playlist in playlists:
                 pl_id, pl_name = playlist["id"], playlist["name"]
-                self.current_user_unfollow_playlist(playlist_id=pl_id)
+                self.sp.current_user_unfollow_playlist(playlist_id=pl_id)
 
     def check_exists(self, pl_id: str) -> bool:
         """Checks if a playlist exists."""
@@ -129,7 +129,7 @@ class SpotipySpotifyFacade(BaseClass):
         Returns a list of dicts if the playlist exists (or multiple with the
         same name do).
         """
-        playlists = self.user_playlists(self.user_id)
+        playlists = self.sp.user_playlists(self.user_id)
         selected_playlists = []
         for playlist in playlists["items"]:
             name, cur_id = playlist["name"], playlist["id"]
