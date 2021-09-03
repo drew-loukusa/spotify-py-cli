@@ -1,4 +1,4 @@
-"""This module contains utility functions built on top of the spotipy wrapper"""
+"""This module contains a facade class built on top of spotipy Spotify wrapper"""
 import textwrap
 from typing import List
 import spotipy
