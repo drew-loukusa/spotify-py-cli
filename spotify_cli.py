@@ -22,7 +22,7 @@ def create(
     name: str,
     desc: str = typer.Option("", help=Create.desc_help),
     public: bool = typer.Option(False, help=Create.public_help),
-    collab: bool = typer.Option(False, "--collab", help=Create.collab_help),
+    collab: bool = typer.Option(False, help=Create.collab_help),
     force: bool = typer.Option(False, help=Create.force_help),
 ):
     """
