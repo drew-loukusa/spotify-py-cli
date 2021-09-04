@@ -52,10 +52,15 @@ def create(
 
 
 @app.command()
-def follow(pl_id: str = typer.Argument(..., help=Follow.id_help)):
-    """Follow a playlist"""
-    name = spot.follow_playlist(pl_id=pl_id)
-    typer.echo(Follow.followed.format(name, pl_id))
+def follow(
+    item_type: str = typer.Argument(
+        ..., help="Item type to follow: 'playlist' or 'artist'"
+    ),
+    item_id: str = typer.Argument(..., help=Follow.id_help),
+):
+    """Follow a followable item (playlist or artist)"""
+    name = spot.follow_item(item_type=item_type, item_id=item_id)
+    typer.echo(Follow.followed.format(item_type, name, item_id))
     sys.exit(0)
 
 
@@ -68,7 +73,6 @@ def unfollow(
         "--no-prompt",
         help=Unfollow.no_prompt_help,
     ),
-    unfollow_all: bool = typer.Option(False, "--all", help=Unfollow.all_help),
 ):
     """
     Unfollow a playlist; remove it from your library.
@@ -91,11 +95,7 @@ def unfollow(
 
     # Exit if there are duplicate playlist names
     # and the right flags are not present
-    if (
-        playlists is not None
-        and len(playlists) > 1
-        and not (unfollow_all and no_prompt)
-    ):
+    if playlists is not None and len(playlists) > 1:
         typer.echo(Unfollow.dupes_found.format(name))
         sys.exit(0)
 
@@ -119,13 +119,8 @@ def unfollow(
         if playlists is not None and len(playlists) == 1:
             pl_id = playlists[0]["id"]
             pl_name = playlists[0]["name"]
-
-        if unfollow_all:
-            spot.unfollow_all_pl(pl_name=name)
-            typer.echo(Unfollow.unfollowed_all.format(pl_name))
-        else:
-            spot.unfollow_playlist(pl_id)
-            typer.echo(Unfollow.unfollowed_plist.format(pl_name, pl_id))
+        spot.unfollow_playlist(pl_id)
+        typer.echo(Unfollow.unfollowed_plist.format(pl_name, pl_id))
         sys.exit(0)
 
     typer.echo(General.op_canceled)

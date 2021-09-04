@@ -32,8 +32,8 @@ class Create:
 
 
 class Follow:
-    id_help = "Use id to specify playlist"
-    followed = "Followed playlist with name: {}, id: {}"
+    id_help = "Use id to specify item"
+    followed = "Followed {} with name: {}, id: {}"
 
 
 class Unfollow:

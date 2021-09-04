@@ -5,6 +5,8 @@ The purpose of this document is to list out the requirements for this project (S
 
 Having a spec allows me to write tests before writing code as I am using TDD for this project.
 
+UPDATE: This thing is massively out of date, I may or may not update it.
+
 ## High Level Requirements
 
 * Users should be able to login/verify their identity
@@ -99,3 +101,34 @@ I don't want to have my tests reliant on spotify not returning a result, don't w
 * Other things I'll need
     * EDIT, I need to add the EDIT command...
     * Ability to add and remove songs from a playlist
+
+## THOUGHTS
+I just need place to put these down...
+
+I'm trying to decide between JUST providing the functionality that the Spotipy wrapper provides, i.e. 
+wrap the wrapper as a CLI and don't add any additional functionality OR...
+
+Provide extra functionality. 
+
+For simplicity, I want to JUST expose the functionality that the wrapper provides...
+But, that is also boring.
+
+I want to add new things to make the CLI more useable than the wrapper...
+
+So I think I WILL add functionality where I think it will be useful.
+
+Okay with that decision made, lets make a decision on this:
+
+Background:
+I want to allow users to provide NAMES to do things. ISSUE, IDs are used to do everything in the API, 
+and duplicate names are allowed (for songs, playlists, artitsts, etc). 
+
+Problem:
+When user providse name and the CLI finds dupes, what should it do? 
+* Should it auto-pick (if given a flag)
+* Should it ADD/REMOVE/FOLLOW/etc ALL items found by name (given flag)
+* Report to user: Dupes found, and show IDs so user can specify with ID what item to do ACTION on 
+I think I will go with number 3 for now. Report dupes, show info, let user specify with id 
+
+Generic follow unfollow etc 
+(FOLLOW | UNFOLLOW) FOLLOWABLE_TYPE [Name | -id ID] 

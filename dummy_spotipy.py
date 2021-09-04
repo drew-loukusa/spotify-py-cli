@@ -10,9 +10,37 @@ class DummySpotipy:
         self.data = {
             "id": "123_fake_user_id",
         }
+        self.artists = {}
+        self.non_followed_artists = {}
         self.playlists = {"items": []}
         self.non_followed_playlists = {"items": []}
         self.pl_dict = {}
+
+    def current_user_following_artists(self, ids):
+        bools = []
+        for item_id in ids:
+            if item_id in self.artists:
+                bools.append(True)
+            else:
+                bools.append(False)
+        return bools
+
+    def artist(self, artist_id):
+        return self.artists[artist_id]
+
+    def user_follow_artists(self, ids):
+        for artist_id in ids:
+            if artist_id in self.non_followed_artists:
+                name = self.non_followed_artists.pop(artist_id)
+                self.artists[artist_id] = {"name": name}
+
+    def user_unfollow_artists(self, ids):
+        for artist_id in ids:
+            if artist_id in self.artists:
+                self.artists.pop(artist_id)
+
+    def create_non_followed_artist(self, item_id, name=None):
+        self.non_followed_artists[item_id] = name
 
     def create_non_followed_playlist(self, name, id=None):
         pl_id = "123_fake_playlist_id" + str(self.pl_id_count)

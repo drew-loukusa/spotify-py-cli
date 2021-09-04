@@ -63,6 +63,17 @@ class SpotipySpotifyFacade:
         )
         return result["id"]
 
+    def follow_item(self, item_type, item_id):
+        if item_type == "playlist":
+            return self.follow_playlist(pl_id=item_id)
+        elif item_type == "artist":
+            return self.follow_artist(artist_id=item_id)
+
+    def follow_artist(self, artist_id):
+        self.sp.user_follow_artists([artist_id])
+        return self.sp.artist(artist_id)["name"]
+
+    # ========================== Playlists ===================================#
     def get_user_playlists(self):
         """Gets all of a users playlists"""
         res = self.sp.user_playlists(self.user_id)

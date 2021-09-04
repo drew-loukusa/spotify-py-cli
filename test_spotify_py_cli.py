@@ -88,7 +88,8 @@ class TestCreate:
 
 
 class TestFollow:
-    def test_follow_by_id(self):
+    def test_follow_pl_by_id(self):
+        item_type = "playlist"
         test_name = "Massive Drum & Bass"
         pl_id = "37i9dQZF1DX5wDmLW735Yd"
 
@@ -98,7 +99,7 @@ class TestFollow:
 
         if USE_DUMMY_WRAPPER:
             spot.sp.create_non_followed_playlist(test_name, pl_id)
-        result = runner.invoke(app, ["follow", pl_id])
+        result = runner.invoke(app, ["follow", item_type, pl_id])
 
         following = spot.following_playlist(pl_id)
 
@@ -107,7 +108,34 @@ class TestFollow:
             spot.unfollow_playlist(pl_id)
 
         assert following == True
-        assert Follow.followed.format(test_name, pl_id) in result.stdout
+        assert (
+            Follow.followed.format(item_type, test_name, pl_id) in result.stdout
+        )
+
+    def test_follow_artist_by_id(self):
+        test_name = "Weezer"
+        item_type = "artist"
+        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+
+        was_following = spot.sp.current_user_following_artists([artist_id])[0]
+        if was_following:
+            spot.sp.user_unfollow_artists([artist_id])
+
+        if USE_DUMMY_WRAPPER:
+            spot.sp.create_non_followed_artist(artist_id, test_name)
+        result = runner.invoke(app, ["follow", item_type, artist_id])
+
+        following = spot.sp.current_user_following_artists([artist_id])[0]
+
+        # Cleanup
+        if following and not was_following:
+            spot.sp.user_unfollow_artists([artist_id])
+
+        assert following == True
+        assert (
+            Follow.followed.format(item_type, test_name, artist_id)
+            in result.stdout
+        )
 
 
 class TestUnfollow:
@@ -184,31 +212,6 @@ class TestUnfollow:
             in result.stdout
         )
 
-    def test_unfollow_name_clash_no_prompt_all(self):
-        """
-        Test deleting multiple playlists.
-        Skip prompt with --no-prompt
-        Use --all flag to unfollow all.
-        """
-        pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        pl_id2 = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(
-            app, ["unfollow", "--no-prompt", "--all", TEST_PL_NAME]
-        )
-        pl1_exists = spot.check_exists(pl_id1)
-        pl2_exists = spot.check_exists(pl_id1)
-
-        # Cleanup, if needed
-        if pl1_exists:
-            spot.unfollow_playlist(pl_id1)
-        if pl2_exists:
-            spot.unfollow_playlist(pl_id2)
-
-        assert result.exit_code == 0
-        assert not pl1_exists
-        assert not pl2_exists
-
     def test_unfollow_name_clash_no_prompt_no_all(self):
         """
         Test deleting when multiple lists exist with same name and
@@ -220,25 +223,6 @@ class TestUnfollow:
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
 
         result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
-
-        # Cleanup
-        spot.unfollow_playlist(pl_id1)
-        spot.unfollow_playlist(pl_id2)
-
-        assert result.exit_code == 0
-        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
-
-    def test_unfollow_name_clash_prompt_all(self):
-        """
-        Test deleting when multiple lists exist with same name and
-        --no-prompt flag was used ()
-        If multiple lists exist with given name, cli does not know
-        which to unfollow. It should exit with code 1, and tell user.
-        """
-        pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        pl_id2 = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(app, ["unfollow", "--all", TEST_PL_NAME])
 
         # Cleanup
         spot.unfollow_playlist(pl_id1)
