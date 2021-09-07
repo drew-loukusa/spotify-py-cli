@@ -1,9 +1,9 @@
 class General:
     spec_name_id = "You must specify NAME or ID"
-    num_plist_found = "{} playlist(s) found matching name {}"
-    plist_DNE = "Playlist {} appears to not exist!"
+    num_items_found = "{} item(s) found matching name {}"
+    item_DNE = "Item with {}: '{}' appears to not exist!"
     op_canceled = "Operation cancelled"
-    not_found = "Could not find {} in user's playlists."
+    not_found = "Could not find {} in user's followed items."
 
 
 class Create:
@@ -37,27 +37,22 @@ class Follow:
 
 
 class Unfollow:
-    id_help = "Use id to specify playlist"
+    id_help = "Use id to specify item to unfollow"
     no_prompt_help = (
         "Do not prompt user to confirm unfollow. Will be ignored if NAME "
-        + "is supplied and multiple playlists exist with the same name.\n"
+        + "is supplied and multiple items exist with the same name.\n"
         + "See '--all' for deleting multiple lists that share the same name."
-    )
-    all_help = (
-        "If multiple lists are found that share the same name, unfollow all. "
-        + "Only has effect if used with --no-prompt."
     )
 
     dupes_found = (
-        "Multiple playlists were found with name: {}."
-        + "\nPlease use '--no-prompt' with '--all' to "
-        + "unfollow all, or specify with '--id' which playlist to unfollow."
+        "Multiple items were found with name: {}."
+        + "Please specify with '--id' which item to unfollow."
     )
 
-    confirm = "Are you sure you want to unfollow the playlist {}?"
+    confirm = "Are you sure you want to unfollow the ID: {}, item: {}?"
 
-    unfollowed_all = "unfollowed all playlists associated with name: {}"
-    unfollowed_plist = "unfollowed playlist: {}, ID: {}"
+    unfollowed_all = "unfollowed all items associated with name: {}"
+    unfollowed_item = "unfollowed item: {}, ID: {}"
 
 
 class Search:

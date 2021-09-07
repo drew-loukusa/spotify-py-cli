@@ -138,7 +138,7 @@ class TestFollow:
         )
 
 
-class TestUnfollow:
+class TestUnfollowOLD:
     def test_unfollow_no_name_or_id(self):
         result = runner.invoke(app, ["unfollow", "--no-prompt"])
         assert result.exit_code == 1
@@ -165,7 +165,7 @@ class TestUnfollow:
 
         assert result.exit_code == 0
         assert (
-            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
         assert not pl_exists
@@ -182,7 +182,7 @@ class TestUnfollow:
 
         assert result.exit_code == 0
         assert (
-            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
         assert not pl_exists
@@ -199,7 +199,7 @@ class TestUnfollow:
 
         assert result.exit_code == 0
         assert (
-            Unfollow.unfollowed_plist.format(TEST_PL_NAME, pl_id)
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
         assert not pl_exists
@@ -207,10 +207,7 @@ class TestUnfollow:
     def test_unfollow_playlist_DNE(self):
         result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="y\n")
         assert result.exit_code == 1
-        assert (
-            f"Playlist with name: '{TEST_PL_NAME}' appears to not exist!"
-            in result.stdout
-        )
+        assert General.item_DNE.format("name", TEST_PL_NAME) in result.stdout
 
     def test_unfollow_name_clash_no_prompt_no_all(self):
         """
@@ -223,6 +220,148 @@ class TestUnfollow:
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
 
         result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
+
+        # Cleanup
+        spot.unfollow_playlist(pl_id1)
+        spot.unfollow_playlist(pl_id2)
+
+        assert result.exit_code == 0
+        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
+
+
+class TestUnfollow:
+    def test_unfollow_artist_by_name(self):
+        test_name = "Weezer"
+        item_type = "artist"
+        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        spot.follow_item(item_type=item_type, item_id=artist_id)
+        result = runner.invoke(
+            app, ["unfollow", item_type, test_name, "--no-prompt"]
+        )
+
+        following = spot.sp.current_user_following_artists([artist_id])[0]
+
+        assert result.exit_code == 0
+        assert not following
+        assert (
+            Unfollow.unfollowed_item.format(test_name, artist_id)
+            in result.stdout
+        )
+
+    def test_unfollow_artist_by_id(self):
+        test_name = "Weezer"
+        item_type = "artist"
+        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        spot.follow_item(item_type=item_type, item_id=artist_id)
+        result = runner.invoke(
+            app, ["unfollow", item_type, "--id", artist_id, "--no-prompt"]
+        )
+
+        following = spot.sp.current_user_following_artists([artist_id])[0]
+
+        assert result.exit_code == 0
+        assert not following
+        assert (
+            Unfollow.unfollowed_item.format(test_name, artist_id)
+            in result.stdout
+        )
+
+    def test_unfollow_no_name_or_id(self):
+        result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
+        assert result.exit_code == 1
+        assert General.spec_name_id in result.stdout
+
+    def test_unfollow_pl_prompt_cancled(self):
+        pl_id = spot.create_playlist(TEST_PL_NAME)
+        result = runner.invoke(
+            app, ["unfollow", "playlist", TEST_PL_NAME], input="n\n"
+        )
+
+        # Cleanup
+        spot.unfollow_playlist(pl_id)
+        assert result.exit_code == 0
+        assert General.op_canceled in result.stdout
+
+    def test_unfollow_pl_prompt_approved(self):
+        pl_id = spot.create_playlist(TEST_PL_NAME)
+
+        result = runner.invoke(
+            app, ["unfollow", "playlist", TEST_PL_NAME], input="y\n"
+        )
+        pl_exists = spot.check_exists(pl_id)
+
+        # Cleanup, if needed
+        if pl_exists:
+            spot.unfollow_playlist(pl_id)
+
+        assert result.exit_code == 0
+        assert (
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
+        assert not pl_exists
+
+    def test_unfollow_pl_by_id(self):
+        pl_id = spot.create_playlist(TEST_PL_NAME)
+
+        result = runner.invoke(
+            app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
+        )
+        pl_exists = spot.check_exists(pl_id)
+
+        # Cleanup, if needed
+        if pl_exists:
+            spot.unfollow_playlist(pl_id)
+
+        assert result.exit_code == 0
+        assert (
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
+        assert not pl_exists
+
+    def test_unfollow_pl_no_prompt(self):
+        pl_id = spot.create_playlist(TEST_PL_NAME)
+
+        result = runner.invoke(
+            app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
+        )
+        pl_exists = spot.check_exists(pl_id)
+
+        # Cleanup, if needed
+        if pl_exists:
+            spot.unfollow_playlist(pl_id)
+
+        assert result.exit_code == 0
+        assert (
+            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
+            in result.stdout
+        )
+        assert not pl_exists
+
+    def test_unfollow_pl_DNE(self):
+        result = runner.invoke(
+            app, ["unfollow", "playlist", TEST_PL_NAME], input="y\n"
+        )
+        assert result.exit_code == 1
+        assert (
+            f"Playlist with name: '{TEST_PL_NAME}' appears to not exist!"
+            in result.stdout
+        )
+
+    def test_unfollow_pl_name_clash_no_prompt(self):
+        """
+        Test deleting when multiple lists exist with same name and
+        --no-prompt flag was used ()
+        If multiple lists exist with given name, cli does not know
+        which to unfollow. It should exit with code 1, and tell user.
+        """
+        pl_id1 = spot.create_playlist(TEST_PL_NAME)
+        pl_id2 = spot.create_playlist(TEST_PL_NAME)
+
+        result = runner.invoke(
+            app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
+        )
 
         # Cleanup
         spot.unfollow_playlist(pl_id1)
@@ -246,7 +385,7 @@ class TestSearch:
         spot.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert General.num_plist_found.format(1, TEST_PL_NAME) in result.stdout
+        assert General.num_items_found.format(1, TEST_PL_NAME) in result.stdout
 
     def test_search_name_provided_and_playlist_DNE(self):
         result = runner.invoke(app, ["search", TEST_PL_NAME])
@@ -263,7 +402,7 @@ class TestSearch:
         spot.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert General.num_plist_found.format(2, TEST_PL_NAME) in result.stdout
+        assert General.num_items_found.format(2, TEST_PL_NAME) in result.stdout
 
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:

@@ -66,6 +66,10 @@ class SpotipySpotifyFacade:
         return result["id"]
 
     def follow_item(self, item_type, item_id):
+        """
+        Follows a followable item.
+        item_type: "playlist" or "artist"
+        """
         if item_type == "playlist":
             return self.follow_playlist(pl_id=item_id)
         elif item_type == "artist":

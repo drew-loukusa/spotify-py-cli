@@ -67,7 +67,7 @@ def follow(
 @app.command()
 def unfollow(
     name: str = typer.Argument(""),
-    pl_id: str = typer.Option("", "--id", help=Unfollow.id_help),
+    item_id: str = typer.Option("", "--id", help=Unfollow.id_help),
     no_prompt: bool = typer.Option(
         False,
         "--no-prompt",
@@ -75,52 +75,55 @@ def unfollow(
     ),
 ):
     """
-    Unfollow a playlist; remove it from your library.
+    Unfollow an item; remove it from your library.
     This "deletes" playlists you've created.
     """
-    if name == "" and pl_id == "":
+    if name == "" and item_id == "":
         typer.echo(General.spec_name_id)
         sys.exit(1)
 
     # Retrieve any playlists matching 'name' or 'pl_id'
-    playlists = spot.get_playlist(pl_name=name, pl_id=pl_id)
+    playlists = spot.get_playlist(pl_name=name, pl_id=item_id)
 
     # Report how many playlist were found matching 'name' if name was used
-    if pl_id == "" and playlists is not None:
-        typer.echo(General.num_plist_found.format(len(playlists), name))
+    if item_id == "" and playlists is not None:
+        typer.echo(General.num_items_found.format(len(playlists), name))
 
         # If there is more than one playlist with the same name, list them out
         if len(playlists) > 1:
             spot.print_playlists(typer.echo, playlists)
 
     # Exit if there are duplicate playlist names
-    # and the right flags are not present
+    # User will have to specify with ID which item to unfollow
     if playlists is not None and len(playlists) > 1:
         typer.echo(Unfollow.dupes_found.format(name))
         sys.exit(0)
 
     # Exit if the name or id given does not match any given playlist
-    label = f"with name: '{name}'" if pl_id == "" else f"with id: '{pl_id}'"
+    spec_type = "name" if item_id == "" else "id"
+    specifier = name if item_id == "" else item_id
     if playlists is None:
-        typer.echo(General.plist_DNE.format(label))
+        typer.echo(General.item_DNE.format(spec_type, specifier))
         typer.echo(General.op_canceled)
         sys.exit(1)
 
     # If '--no-prompt' was not used, confirm Unfollow with user
     confirm_Unfollow = False
     if not no_prompt:
-        confirm_Unfollow = typer.confirm(text=Unfollow.confirm.format(label))
+        confirm_Unfollow = typer.confirm(
+            text=Unfollow.confirm.format(spec_type, specifier)
+        )
     else:
         confirm_Unfollow = True
 
     if confirm_Unfollow:
         pl_name = None if name == "" else name
-        pl_id = None if pl_id == "" else pl_id
+        item_id = None if item_id == "" else item_id
         if playlists is not None and len(playlists) == 1:
-            pl_id = playlists[0]["id"]
+            item_id = playlists[0]["id"]
             pl_name = playlists[0]["name"]
-        spot.unfollow_playlist(pl_id)
-        typer.echo(Unfollow.unfollowed_plist.format(pl_name, pl_id))
+        spot.unfollow_playlist(item_id)
+        typer.echo(Unfollow.unfollowed_item.format(pl_name, item_id))
         sys.exit(0)
 
     typer.echo(General.op_canceled)
@@ -149,10 +152,10 @@ def search(
     elif not public:
         playlists = spot.get_playlist(name)
         if playlists is None:
-            typer.echo(Search.plist_DNE.format(name))
+            typer.echo(General.not_found.format(name))
             sys.exit(1)
         else:
-            typer.echo(General.num_plist_found.format(len(playlists), name))
+            typer.echo(General.num_items_found.format(len(playlists), name))
             spot.print_playlists(print_func=typer.echo, playlists=playlists)
 
     # Search through all public playlists
