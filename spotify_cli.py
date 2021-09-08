@@ -66,6 +66,9 @@ def follow(
 
 @app.command()
 def unfollow(
+    item_type: str = typer.Argument(
+        ..., help="Item type to follow: 'playlist' or 'artist'"
+    ),
     name: str = typer.Argument(""),
     item_id: str = typer.Option("", "--id", help=Unfollow.id_help),
     no_prompt: bool = typer.Option(
@@ -82,28 +85,28 @@ def unfollow(
         typer.echo(General.spec_name_id)
         sys.exit(1)
 
-    # Retrieve any playlists matching 'name' or 'pl_id'
-    playlists = spot.get_playlist(pl_name=name, pl_id=item_id)
+    # Retrieve any items matching 'name' or 'pl_id'
+    items = spot.get_item(item_type=item_type, item_name=name, item_id=item_id)
 
-    # Report how many playlist were found matching 'name' if name was used
-    if item_id == "" and playlists is not None:
-        typer.echo(General.num_items_found.format(len(playlists), name))
+    # Report how many items were found matching 'name' if name was used
+    if item_id == "" and items is not None:
+        typer.echo(General.num_items_found.format(len(items), name))
 
-        # If there is more than one playlist with the same name, list them out
-        if len(playlists) > 1:
-            spot.print_playlists(typer.echo, playlists)
+        # If there is more than one item with the same name, list them out
+        if len(items) > 1:
+            spot.print_items(item_type, typer.echo, items)
 
-    # Exit if there are duplicate playlist names
+    # Exit if there are duplicate item names
     # User will have to specify with ID which item to unfollow
-    if playlists is not None and len(playlists) > 1:
+    if items is not None and len(items) > 1:
         typer.echo(Unfollow.dupes_found.format(name))
         sys.exit(0)
 
-    # Exit if the name or id given does not match any given playlist
+    # Exit if the name or id given does not match any given item
     spec_type = "name" if item_id == "" else "id"
     specifier = name if item_id == "" else item_id
-    if playlists is None:
-        typer.echo(General.item_DNE.format(spec_type, specifier))
+    if items is None:
+        typer.echo(General.item_DNE.format(item_type, spec_type, specifier))
         typer.echo(General.op_canceled)
         sys.exit(1)
 
@@ -117,13 +120,13 @@ def unfollow(
         confirm_Unfollow = True
 
     if confirm_Unfollow:
-        pl_name = None if name == "" else name
+        item_name = None if name == "" else name
         item_id = None if item_id == "" else item_id
-        if playlists is not None and len(playlists) == 1:
-            item_id = playlists[0]["id"]
-            pl_name = playlists[0]["name"]
-        spot.unfollow_playlist(item_id)
-        typer.echo(Unfollow.unfollowed_item.format(pl_name, item_id))
+        if items is not None and len(items) == 1:
+            item_id = items[0]["id"]
+            item_name = items[0]["name"]
+        spot.unfollow_item(item_type=item_type, item_id=item_id)
+        typer.echo(Unfollow.unfollowed_item.format(item_name, item_id))
         sys.exit(0)
 
     typer.echo(General.op_canceled)

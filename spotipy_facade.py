@@ -75,9 +75,32 @@ class SpotipySpotifyFacade:
         elif item_type == "artist":
             return self.follow_artist(artist_id=item_id)
 
+    def unfollow_item(self, item_type, item_id):
+        """
+        Unfollows a followable item.
+        item_type: "playlist" or "artist"
+        """
+        if item_type == "playlist":
+            return self.unfollow_playlist(pl_id=item_id)
+        elif item_type == "artist":
+            return self.unfollow_artist(artist_id=item_id)
+
     def follow_artist(self, artist_id):
+        """
+        Follows artist with ID 'artist_id'
+        Returns name of followed artist
+        """
         self.sp.user_follow_artists([artist_id])
         return self.sp.artist(artist_id)["name"]
+
+    def unfollow_artist(self, artist_id):
+        """
+        Unfollows artist with ID 'artist_id'
+        Returns name of followed artist
+        """
+        name = self.sp.artist(artist_id)["name"]
+        self.sp.user_unfollow_artists([artist_id])
+        return name
 
     # ========================== Playlists ===================================#
     def get_user_playlists(self):
@@ -135,13 +158,21 @@ class SpotipySpotifyFacade:
             return id_list
         return None
 
+    def get_item(
+        self, item_type: str, item_name: str = None, item_id: str = None
+    ) -> List[dict]:
+        if item_type == "playlist":
+            return self.get_playlist(item_name, item_id)
+        elif item_type == "artist":
+            return self.get_artist(item_name, item_id)
+
     def get_playlist(
         self, pl_name: str = None, pl_id: str = None
     ) -> List[dict]:
         """
-        Attempts to retrieve all info related to a given playlist.
+        Attempts to retrieve a given playlist that the user is following.
         Accepts playlist name or id as ways of getting the playlist.
-        Returns None if playlists does not exit
+        Returns None if playlist is not being followed by the user
 
         Returns a list of dicts if the playlist exists (or multiple with the
         same name do).
@@ -156,6 +187,18 @@ class SpotipySpotifyFacade:
                 selected_playlists.append(playlist)
 
         return None if len(selected_playlists) == 0 else selected_playlists
+
+    def get_artist(self, name: str = None, artist_id: str = None) -> List[dict]:
+        selected_artists = []
+        artists = self.sp.current_user_followed_artists()
+        for artist in artists["artists"]["items"]:
+            cur_name, cur_id = artist["name"], artist["id"]
+            if (
+                name is not None and name.rstrip() == cur_name.strip()
+            ) or artist_id == cur_id:
+                selected_artists.append(artist)
+
+        return None if len(selected_artists) == 0 else selected_artists
 
     @staticmethod
     def stringify_playlist(playlist) -> str:
@@ -180,6 +223,25 @@ class SpotipySpotifyFacade:
         return "\n".join(info)
 
     @staticmethod
+    def stringify_artist(artist) -> str:
+        """Extract relevant info about a artist from the dict 'artist' as a string"""
+        info = ["-----------------------"]
+        info += [f"Name:\t\t{artist['name']}"]
+        info += [f"id:\t{artist['id']}"]
+        genres = artist["genres"]
+        wrapped_genres = textwrap.wrap(
+            "Genres:\t" + ",".join(genres),
+            width=64,
+            initial_indent="",
+            subsequent_indent="\t\t",
+        )
+        info.extend(wrapped_genres)
+        info += [f"Followers: {artist['followers']['total']}"]
+        info += [f"Url: {artist['external_urls']['spotify']}"]
+
+        return "\n".join(info)
+
+    @staticmethod
     def print_playlists(print_func, playlists):
         if playlists is None:
             print_func("No playlists to print!")
@@ -187,3 +249,19 @@ class SpotipySpotifyFacade:
 
         for pl_list in playlists:
             print_func(SpotipySpotifyFacade.stringify_playlist(pl_list))
+
+    @staticmethod
+    def print_artists(print_func, artists):
+        if artists is None:
+            print_func("No artists to print!")
+            return
+
+        for artist in artists:
+            print_func(SpotipySpotifyFacade.stringify_artist(artist))
+
+    @staticmethod
+    def print_items(item_type, print_func, items):
+        if item_type == "playlist":
+            SpotipySpotifyFacade.print_playlists(print_func, items)
+        elif item_type == "artist":
+            SpotipySpotifyFacade.print_artists(print_func, items)

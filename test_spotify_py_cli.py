@@ -138,102 +138,13 @@ class TestFollow:
         )
 
 
-class TestUnfollowOLD:
-    def test_unfollow_no_name_or_id(self):
-        result = runner.invoke(app, ["unfollow", "--no-prompt"])
-        assert result.exit_code == 1
-        assert General.spec_name_id in result.stdout
-
-    def test_unfollow_prompt_cancled(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
-        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="n\n")
-
-        # Cleanup
-        spot.unfollow_playlist(pl_id)
-        assert result.exit_code == 0
-        assert General.op_canceled in result.stdout
-
-    def test_unfollow_prompt_approved(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="y\n")
-        pl_exists = spot.check_exists(pl_id)
-
-        # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
-
-        assert result.exit_code == 0
-        assert (
-            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-            in result.stdout
-        )
-        assert not pl_exists
-
-    def test_unfollow_by_id(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(app, ["unfollow", "--id", pl_id], input="y\n")
-        pl_exists = spot.check_exists(pl_id)
-
-        # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
-
-        assert result.exit_code == 0
-        assert (
-            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-            in result.stdout
-        )
-        assert not pl_exists
-
-    def test_unfollow_no_prompt(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
-        pl_exists = spot.check_exists(pl_id)
-
-        # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
-
-        assert result.exit_code == 0
-        assert (
-            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-            in result.stdout
-        )
-        assert not pl_exists
-
-    def test_unfollow_playlist_DNE(self):
-        result = runner.invoke(app, ["unfollow", TEST_PL_NAME], input="y\n")
-        assert result.exit_code == 1
-        assert General.item_DNE.format("name", TEST_PL_NAME) in result.stdout
-
-    def test_unfollow_name_clash_no_prompt_no_all(self):
-        """
-        Test deleting when multiple lists exist with same name and
-        --no-prompt flag was used ()
-        If multiple lists exist with given name, cli does not know
-        which to unfollow. It should exit with code 1, and tell user.
-        """
-        pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        pl_id2 = spot.create_playlist(TEST_PL_NAME)
-
-        result = runner.invoke(app, ["unfollow", "--no-prompt", TEST_PL_NAME])
-
-        # Cleanup
-        spot.unfollow_playlist(pl_id1)
-        spot.unfollow_playlist(pl_id2)
-
-        assert result.exit_code == 0
-        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
-
-
 class TestUnfollow:
     def test_unfollow_artist_by_name(self):
         test_name = "Weezer"
         item_type = "artist"
         artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        if USE_DUMMY_WRAPPER:
+            spot.sp.create_non_followed_artist(artist_id, test_name)
         spot.follow_item(item_type=item_type, item_id=artist_id)
         result = runner.invoke(
             app, ["unfollow", item_type, test_name, "--no-prompt"]
@@ -252,6 +163,8 @@ class TestUnfollow:
         test_name = "Weezer"
         item_type = "artist"
         artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        if USE_DUMMY_WRAPPER:
+            spot.sp.create_non_followed_artist(artist_id, test_name)
         spot.follow_item(item_type=item_type, item_id=artist_id)
         result = runner.invoke(
             app, ["unfollow", item_type, "--id", artist_id, "--no-prompt"]
@@ -340,12 +253,13 @@ class TestUnfollow:
         assert not pl_exists
 
     def test_unfollow_pl_DNE(self):
+        item_type = "playlist"
         result = runner.invoke(
-            app, ["unfollow", "playlist", TEST_PL_NAME], input="y\n"
+            app, ["unfollow", item_type, TEST_PL_NAME], input="y\n"
         )
         assert result.exit_code == 1
         assert (
-            f"Playlist with name: '{TEST_PL_NAME}' appears to not exist!"
+            General.item_DNE.format(item_type, "name", TEST_PL_NAME)
             in result.stdout
         )
 
@@ -454,3 +368,4 @@ import os
 
 # Run test case directly here
 # TestFollow().test_follow_by_id()
+# TestUnfollow().test_unfollow_artist_by_name()

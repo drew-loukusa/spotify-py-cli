@@ -1,7 +1,7 @@
 class General:
     spec_name_id = "You must specify NAME or ID"
     num_items_found = "{} item(s) found matching name {}"
-    item_DNE = "Item with {}: '{}' appears to not exist!"
+    item_DNE = "{} with {}: '{}' appears to not exist!"
     op_canceled = "Operation cancelled"
     not_found = "Could not find {} in user's followed items."
 
