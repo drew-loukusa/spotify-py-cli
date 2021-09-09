@@ -18,22 +18,25 @@ For simplicity, and because Spotipy doesn't support Implicit Grant authorization
 5. Note that the Client ID and Client Secret are also on the app overview page; these will be used later
 
 Next, you have two options: Use a standalone release, or use Python.
-### Standalone Release: COMING SOON
+### Using a Standalone Release: COMING SOON
 **Note**: I haven't made any standalone releases yet. If you really want one, open an issue to bug me about it.
 
 Or, you can use [pyinstaller](https://www.pyinstaller.org/) to build a standalone app yourself; it's what I'll be doing when I get around to it.
 
 If you don't want to install Python onto your system, you can download an existing standalone build of the app from the releases page.
 1. Download the latest release from the [releases page](TODO_Insert_LINK)
-2. Place your Client_ID and Client_Secret, place into the existing .env file in downloaded code directory or release directory
-
-### Python
+2. See step 3 of **Using Python**
+### Using Python
 1. Clone the repo 
 2. Install Python 3.8 or greater 
     * Note: This app was built using Python 3.8 and 3.96, but it may work with older versions; I have not tested anything older than 3.8 so I can't make any guarentees for anything older than that.
-3. Get your Client ID and Client_Secret, place into the existing .env file in downloaded code directory or release directory
-    * Client ID goes with SPOTIPY_CLIENT_ID 
-    * Client Secret goes with SPOTIPY_CLIENT_SECRET
+3. Create a credentials file 
+    1. Retrieve your Client ID and Client Secret from the app overview page
+    2. Create .env file and place it into the same directory as the source code (or exe if using a standalone release)
+    3. Place the following text into the .env file:
+        > SPOTIPY_CLIENT_ID=Your_Spotify_Client_ID
+        SPOTIPY_CLIENT_SECRET=Your_Spotify_Client_Secret
+        SPOTIPY_REDIRECT_URI=http://localhost:8080
 4. If Python is in the path, then navigate to the directory the app is in and run the app with:
     > py spotify-cli.py 
 
