@@ -35,8 +35,8 @@ If you don't want to install Python onto your system, you can download an existi
     2. Create .env file and place it into the same directory as the source code (or exe if using a standalone release)
     3. Place the following text into the .env file:
         > SPOTIPY_CLIENT_ID=Your_Spotify_Client_ID
-        SPOTIPY_CLIENT_SECRET=Your_Spotify_Client_Secret
-        SPOTIPY_REDIRECT_URI=http://localhost:8080
+        > SPOTIPY_CLIENT_SECRET=Your_Spotify_Client_Secret
+        > SPOTIPY_REDIRECT_URI=http://localhost:8080
 4. If Python is in the path, then navigate to the directory the app is in and run the app with:
     > py spotify-cli.py 
 
