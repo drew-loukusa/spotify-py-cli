@@ -19,6 +19,101 @@ SCOPE = "playlist-modify-private \
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
 
+class Playlist:
+    def __init__(self, sp: spotipy.Spotify, item_id: str):
+        self.sp = sp
+        self.info = sp.playlist(item_id)
+        self.id = item_id
+        self.name = self.info["name"]
+
+    def follow(self):
+        self.sp.current_user_follow_playlist(playlist_id=self.id)
+
+    def unfollow(self):
+        self.sp.current_user_unfollow_playlist(playlist_id=self.id)
+
+    def __repr__(self):
+        """Extract relevant info about a playlist from the dict 'playlist' as a string"""
+        info = ["-----------------------"]
+        info += [f"Name:\t\t{self.info['name']}"]
+
+        desc = self.info["description"]
+        wrapped_desc = textwrap.wrap(
+            "Description:\t" + desc,
+            width=64,
+            initial_indent="",
+            subsequent_indent="\t\t",
+        )
+        info.extend(wrapped_desc)
+        info += [f"Owner:\t\t{self.info['owner']['display_name']}"]
+        info += [f"Track count:\t{self.info['tracks']['total']}"]
+        info += [f"Playlist id:\t{self.info['id']}"]
+        info += [f"Owner id:\t{self.info['owner']['id']}"]
+        info += [f"Url: {self.info['external_urls']['spotify']}"]
+
+        return "\n".join(info)
+
+    @staticmethod
+    def get_followed_item(sp, item_name: str = None, item_id: str = None):
+        playlists = sp.current_user_playlists()
+        selected_playlists = []
+        for playlist in playlists["items"]:
+            item_name, cur_id = playlist["name"], playlist["id"]
+            if (
+                item_name is not None and item_name.strip() == item_name.strip()
+            ) or item_id == cur_id:
+                selected_playlists.append(Playlist(sp, cur_id))
+
+        return None if len(selected_playlists) == 0 else selected_playlists
+
+
+class Artist:
+    def __init__(self, sp: spotipy.Spotify, item_id: str):
+        self.sp = sp
+        self.info = sp.artist(item_id)
+        self.id = item_id
+        self.name = self.info["name"]
+
+    def follow(self):
+        self.sp.user_follow_artists([self.id])
+
+    def unfollow(self):
+        self.sp.user_unfollow_artists([self.id])
+
+    def __repr__(self):
+        """Extract relevant info about a artist from the dict 'artist' as a string"""
+        info = ["-----------------------"]
+        info += [f"Name:\t\t{self.info['name']}"]
+        info += [f"id:\t{self.info['id']}"]
+        genres = self.info["genres"]
+        wrapped_genres = textwrap.wrap(
+            "Genres:\t" + ",".join(genres),
+            width=64,
+            initial_indent="",
+            subsequent_indent="\t\t",
+        )
+        info.extend(wrapped_genres)
+        info += [f"Followers: {self.info['followers']['total']}"]
+        info += [f"Url: {self.info['external_urls']['spotify']}"]
+
+        return "\n".join(info)
+
+    @staticmethod
+    def get_followed_item(
+        sp, item_name: str = None, item_id: str = None
+    ) -> List[dict]:
+        selected_artists = []
+        artists = sp.current_user_followed_artists()
+        for artist in artists["artists"]["items"]:
+            cur_name, cur_id = artist["name"], artist["id"]
+            if (
+                item_name is not None and item_name.rstrip() == cur_name.strip()
+            ) or item_id == cur_id:
+                selected_artists.append(Artist(sp, cur_id))
+
+        return None if len(selected_artists) == 0 else selected_artists
+
+
 class SpotipySpotifyFacade:
     """
     A facade for simplifying interaction with spotipy's Spotify object.
@@ -34,6 +129,10 @@ class SpotipySpotifyFacade:
             )
         )
         self.user_id = self.sp.me()["id"]
+        self.followables = {"playlist": Playlist, "artist": Artist}
+
+    def get_followable_instance(self, item_type, item_id):
+        return self.followables[item_type](self.sp, item_id)
 
     def search_public_playlist(self, query, limit=10, market=None):
         """Search public playlists."""
@@ -65,26 +164,6 @@ class SpotipySpotifyFacade:
         )
         return result["id"]
 
-    def follow_item(self, item_type, item_id):
-        """
-        Follows a followable item.
-        item_type: "playlist" or "artist"
-        """
-        if item_type == "playlist":
-            return self.follow_playlist(pl_id=item_id)
-        elif item_type == "artist":
-            return self.follow_artist(artist_id=item_id)
-
-    def unfollow_item(self, item_type, item_id):
-        """
-        Unfollows a followable item.
-        item_type: "playlist" or "artist"
-        """
-        if item_type == "playlist":
-            return self.unfollow_playlist(pl_id=item_id)
-        elif item_type == "artist":
-            return self.unfollow_artist(artist_id=item_id)
-
     def follow_artist(self, artist_id):
         """
         Follows artist with ID 'artist_id'
@@ -102,12 +181,24 @@ class SpotipySpotifyFacade:
         self.sp.user_unfollow_artists([artist_id])
         return name
 
-    # ========================== Playlists ===================================#
+    def get_user_items(self, item_type):
+        if item_type == "playlist":
+            return self.get_user_playlists()
+        elif item_type == "artist":
+            return self.get_user_artists()
+
     def get_user_playlists(self):
-        """Gets all of a users playlists"""
+        """Gets all of a users followed playlists"""
         res = self.sp.user_playlists(self.user_id)
         if res is not None:
             return res["items"]
+        return res
+
+    def get_user_artists(self):
+        """Gets all of a users follewed artists"""
+        res = self.sp.current_user_followed_artists()
+        if res is not None:
+            return res["artists"]["items"]
         return res
 
     def list_playlists(self) -> None:
@@ -122,6 +213,10 @@ class SpotipySpotifyFacade:
         return self.sp.playlist_is_following(playlist_id, [self.user_id])[0]
 
     def follow_playlist(self, pl_id):
+        """
+        Follows playlist with id 'pl_id'
+        Returns name of playlist followed
+        """
         self.sp.current_user_follow_playlist(playlist_id=pl_id)
         name = self.get_playlist(pl_id=pl_id)[0]["name"]
         return name
@@ -158,13 +253,17 @@ class SpotipySpotifyFacade:
             return id_list
         return None
 
-    def get_item(
+    def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
-        if item_type == "playlist":
-            return self.get_playlist(item_name, item_id)
-        elif item_type == "artist":
-            return self.get_artist(item_name, item_id)
+        item = self.followables[item_type]
+        return item.get_followed_item(self.sp, item_name, item_id)
+
+    def get_unfollowed_item():
+        # This can be a seperate function, or you can make this an argument of 'get_followed_item' and rename it back to 'get_item'
+        # Getting an item for unfollowing means get the item from the user's followed itmes
+        # gettting an item for following means searching the publicly available items
+        pass
 
     def get_playlist(
         self, pl_name: str = None, pl_id: str = None
@@ -248,7 +347,10 @@ class SpotipySpotifyFacade:
             return
 
         for pl_list in playlists:
-            print_func(SpotipySpotifyFacade.stringify_playlist(pl_list))
+            if type(pl_list) is Playlist:
+                print_func(pl_list)
+            else:
+                print_func(SpotipySpotifyFacade.stringify_playlist(pl_list))
 
     @staticmethod
     def print_artists(print_func, artists):

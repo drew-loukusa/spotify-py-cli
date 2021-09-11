@@ -59,7 +59,9 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item (playlist or artist)"""
-    name = spot.follow_item(item_type=item_type, item_id=item_id)
+    item = spot.get_followable_instance(item_type, item_id)
+    name = item.name
+    item.follow()
     typer.echo(Follow.followed.format(item_type, name, item_id))
     sys.exit(0)
 
@@ -69,7 +71,7 @@ def unfollow(
     item_type: str = typer.Argument(
         ..., help="Item type to follow: 'playlist' or 'artist'"
     ),
-    name: str = typer.Argument(""),
+    name: str = typer.Argument("", help=""),
     item_id: str = typer.Option("", "--id", help=Unfollow.id_help),
     no_prompt: bool = typer.Option(
         False,
@@ -86,7 +88,9 @@ def unfollow(
         sys.exit(1)
 
     # Retrieve any items matching 'name' or 'pl_id'
-    items = spot.get_item(item_type=item_type, item_name=name, item_id=item_id)
+    items = spot.get_followed_item(
+        item_type=item_type, item_name=name, item_id=item_id
+    )
 
     # Report how many items were found matching 'name' if name was used
     if item_id == "" and items is not None:
@@ -120,12 +124,8 @@ def unfollow(
         confirm_Unfollow = True
 
     if confirm_Unfollow:
-        item_name = None if name == "" else name
-        item_id = None if item_id == "" else item_id
-        if items is not None and len(items) == 1:
-            item_id = items[0]["id"]
-            item_name = items[0]["name"]
-        spot.unfollow_item(item_type=item_type, item_id=item_id)
+        item_name, item_id = items[0].name, items[0].id
+        items[0].unfollow()
         typer.echo(Unfollow.unfollowed_item.format(item_name, item_id))
         sys.exit(0)
 
@@ -134,42 +134,53 @@ def unfollow(
 
 @app.command()
 def search(
-    name: str = typer.Argument(""),
-    public: bool = typer.Option(False, help=Search.public_help),
+    # item_type: str = typer.Argument(
+    #     ..., help="Item type to follow: 'playlist' or 'artist'"
+    # ),
+    query: str = typer.Argument(""),
+    user: bool = typer.Option(False, help=Search.user_help),
     limit: int = typer.Option(10, help=Search.limit_help),
     market: str = typer.Option(None, help=Search.market_help),
 ):
     """
-    Search through playlists you follow.
+    Search for followalable items.
+
+    To limit search to just items that a user follows use the '--user' flag
     Don't provide a name and this command will list all playlists you follow.
-
-    Can also search public playlists with '--public'
     """
-    if name == "":
-        typer.echo(Search.list_all)
-        spot.print_playlists(
-            print_func=typer.echo, playlists=spot.get_user_playlists()
-        )
 
-    # Search through user created playlists, and user followed playlists
-    elif not public:
-        playlists = spot.get_playlist(name)
-        if playlists is None:
-            typer.echo(General.not_found.format(name))
+    # TODO: REMOVE THIS
+    item_type = "playlist"
+
+    if query == "" and user:
+        typer.echo(Search.list_all)
+        spot.print_items(
+            item_type=item_type,
+            print_func=typer.echo,
+            items=spot.get_user_items(item_type),
+        )
+    elif query == "":
+        typer.Exit(code=1)
+
+    # Search through user created items, and user followed items
+    elif user:
+        items = spot.get_followed_item(item_type=item_type, item_name=query)
+        if items is None:
+            typer.echo(General.not_found.format(query))
             sys.exit(1)
         else:
-            typer.echo(General.num_items_found.format(len(playlists), name))
-            spot.print_playlists(print_func=typer.echo, playlists=playlists)
+            typer.echo(Search.num_items_found.format(len(items), query))
+            spot.print_playlists(print_func=typer.echo, playlists=items)
 
     # Search through all public playlists
     else:
         typer.echo(Search.search_pub)
-        playlists = spot.search_public_playlist(
-            query=name, limit=limit, market=market
+        items = spot.search_public_playlist(
+            query=query, limit=limit, market=market
         )
 
-        typer.echo(Search.num_public.format(len(playlists), name))
-        spot.print_playlists(typer.echo, playlists)
+        typer.echo(Search.num_items_found.format(len(items), query))
+        spot.print_playlists(typer.echo, items)
 
 
 if __name__ == "__main__":

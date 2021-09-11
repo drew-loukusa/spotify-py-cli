@@ -145,7 +145,7 @@ class TestUnfollow:
         artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
         if USE_DUMMY_WRAPPER:
             spot.sp.create_non_followed_artist(artist_id, test_name)
-        spot.follow_item(item_type=item_type, item_id=artist_id)
+        spot.follow_artist(artist_id)
         result = runner.invoke(
             app, ["unfollow", item_type, test_name, "--no-prompt"]
         )
@@ -165,7 +165,7 @@ class TestUnfollow:
         artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
         if USE_DUMMY_WRAPPER:
             spot.sp.create_non_followed_artist(artist_id, test_name)
-        spot.follow_item(item_type=item_type, item_id=artist_id)
+        spot.follow_artist(artist_id)
         result = runner.invoke(
             app, ["unfollow", item_type, "--id", artist_id, "--no-prompt"]
         )
@@ -287,7 +287,7 @@ class TestUnfollow:
 
 class TestSearch:
     def test_search_no_name_provided(self):
-        result = runner.invoke(app, ["search"])
+        result = runner.invoke(app, ["search", "--user"])
         assert result.exit_code == 0
         assert Search.list_all in result.stdout
 
@@ -299,35 +299,33 @@ class TestSearch:
         spot.unfollow_playlist(pl_id)
 
         assert result.exit_code == 0
-        assert General.num_items_found.format(1, TEST_PL_NAME) in result.stdout
+        assert Search.num_items_found.format(1, TEST_PL_NAME) in result.stdout
 
     def test_search_name_provided_and_playlist_DNE(self):
-        result = runner.invoke(app, ["search", TEST_PL_NAME])
+        result = runner.invoke(app, ["search", "--user", TEST_PL_NAME])
         assert result.exit_code == 1
         assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
         pl_id1 = spot.create_playlist(TEST_PL_NAME)
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
-        result = runner.invoke(app, ["search", TEST_PL_NAME])
+        result = runner.invoke(app, ["search", TEST_PL_NAME, "--user"])
 
         # Clean up
         spot.unfollow_playlist(pl_id1)
         spot.unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
-        assert General.num_items_found.format(2, TEST_PL_NAME) in result.stdout
+        assert Search.num_items_found.format(2, TEST_PL_NAME) in result.stdout
 
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
-        result = runner.invoke(
-            app, ["search", "Massive Drum & Bass", "--public"]
-        )
+        result = runner.invoke(app, ["search", "Massive Drum & Bass"])
 
         assert result.exit_code == 0
         assert Search.search_pub in result.stdout
-        pattern = Search.num_public.replace("{}", r"\d+", 1)
+        pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
 
@@ -335,12 +333,12 @@ class TestSearch:
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
         result = runner.invoke(
-            app, ["search", "Massive Drum & Bass", "--public", "--limit", 5]
+            app, ["search", "Massive Drum & Bass", "--limit", 5]
         )
 
         assert result.exit_code == 0
         assert Search.search_pub in result.stdout
-        pattern = Search.num_public.replace("{}", r"\d+", 1)
+        pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
 
@@ -348,24 +346,22 @@ class TestSearch:
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
         result = runner.invoke(
-            app, ["search", "Massive Drum & Bass", "--public", "--market", "GB"]
+            app, ["search", "Massive Drum & Bass", "--market", "GB"]
         )
 
         assert result.exit_code == 0
         assert Search.search_pub in result.stdout
-        pattern = Search.num_public.replace("{}", r"\d+", 1)
+        pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
 
 
 # Dumb hack for debugging test cases:
+if __name__ == "__main__":
+    # Run test case directly here
 
-# Uncomment this:
-import os
-
-# Put this at the top of SpotifyPlaylistEditor.py:
-# os.environ['USE_DUMMY_WRAPPER'] = 'True'
-
-# Run test case directly here
-# TestFollow().test_follow_by_id()
-# TestUnfollow().test_unfollow_artist_by_name()
+    # TestFollow().test_follow_pl_by_id()
+    # TestFollow().test_follow_artist_by_id()
+    # TestUnfollow().test_unfollow_artist_by_name()
+    TestUnfollow().test_unfollow_artist_by_name()
+    TestUnfollow().test_unfollow_artist_by_id()

@@ -56,17 +56,17 @@ class Unfollow:
 
 
 class Search:
-    public_help = "Search public playlists instead of user's followed and created playlists"
+    user_help = "Limit search to just a user's followed items"
     limit_help = (
         "The number of items to return (min = 1, default = 10, max = 50)"
     )
     market_help = "An ISO 3166-1 alpha-2 country code or the string"
 
     list_all = (
-        "No name provided, listing all playlists (user created and followed)..."
+        "No name provided, listing all items (user created and followed)..."
     )
-    plist_DNE = "Could not find {} in user's playlists."
+    item_DNE = "Could not find {} in user's followed items."
     show_info = "{}, ID: {}\nDescription:\n{}"
 
-    search_pub = "Searching public playlists..."
-    num_public = "Found {} playlists matching the search query: '{}'"
+    search_pub = "Searching public items..."
+    num_items_found = "Found {} items matching the search query: '{}'"

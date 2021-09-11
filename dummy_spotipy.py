@@ -31,6 +31,10 @@ class DummySpotipy:
         return self.artists
 
     def artist(self, artist_id):
+        for art_id, name in self.non_followed_artists.items():
+            if artist_id == art_id:
+                return {"name": name, "id": art_id}
+
         for artist in self.artists["artists"]["items"]:
             if artist_id == artist["id"]:
                 return artist
@@ -113,6 +117,9 @@ class DummySpotipy:
     def user_playlists(self, user):
         return self.playlists
 
+    def current_user_playlists(self):
+        return self.playlists
+
     def current_user_follow_playlist(self, playlist_id):
         playlist = None
         for pl in self.non_followed_playlists["items"]:
@@ -142,3 +149,16 @@ class DummySpotipy:
             if pl_id == playlist_id:
                 return [True]
         return [False]
+
+    def playlist(self, playlist_id):
+        for pl in self.playlists["items"]:
+            pl_id = pl["id"]
+            if pl_id == playlist_id:
+                return pl
+
+        for pl in self.non_followed_playlists["items"]:
+            pl_id = pl["id"]
+            if pl_id == playlist_id:
+                return pl
+
+        return None
