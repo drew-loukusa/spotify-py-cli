@@ -117,9 +117,9 @@ def unfollow(
 
 @app.command()
 def search(
-    # item_type: str = typer.Argument(
-    #     ..., help="Item type to follow: 'playlist' or 'artist'"
-    # ),
+    item_type: str = typer.Argument(
+        ..., help="Item type to follow: 'playlist' or 'artist'"
+    ),
     query: str = typer.Argument(""),
     user: bool = typer.Option(False, help=Search.user_help),
     limit: int = typer.Option(10, help=Search.limit_help),
@@ -131,9 +131,6 @@ def search(
     To limit search to just items that a user follows use the '--user' flag
     Don't provide a name and this command will list all playlists you follow.
     """
-
-    # TODO: REMOVE THIS
-    item_type = "playlist"
 
     if query == "" and user:
         typer.echo(Search.list_all)
@@ -157,12 +154,12 @@ def search(
     # Search through all public playlists
     else:
         typer.echo(Search.search_pub)
-        items = spot.search_public_playlist(
-            query=query, limit=limit, market=market
+        items = spot.search_public(
+            item_type, query, limit, offset=0, market=market
         )
 
         typer.echo(Search.num_items_found.format(len(items), query))
-        spot.print_playlists(typer.echo, items)
+        spot.print_items(typer.echo, items)
 
 
 if __name__ == "__main__":

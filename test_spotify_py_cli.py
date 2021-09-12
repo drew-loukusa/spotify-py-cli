@@ -294,13 +294,13 @@ class TestUnfollow:
 
 class TestSearch:
     def test_search_no_name_provided(self):
-        result = runner.invoke(app, ["search", "--user"])
+        result = runner.invoke(app, ["search", "playlist", "--user"])
         assert result.exit_code == 0
         assert Search.list_all in result.stdout
 
     def test_search_name_provided_and_playlist_exists(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        result = runner.invoke(app, ["search", TEST_PL_NAME])
+        result = runner.invoke(app, ["search", "playlist", TEST_PL_NAME])
 
         # Clean up
         spot.unfollow_playlist(pl_id)
@@ -309,14 +309,18 @@ class TestSearch:
         assert Search.num_items_found.format(1, TEST_PL_NAME) in result.stdout
 
     def test_search_name_provided_and_playlist_DNE(self):
-        result = runner.invoke(app, ["search", "--user", TEST_PL_NAME])
+        result = runner.invoke(
+            app, ["search", "playlist", "--user", TEST_PL_NAME]
+        )
         assert result.exit_code == 1
         assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
         pl_id1 = spot.create_playlist(TEST_PL_NAME)
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
-        result = runner.invoke(app, ["search", TEST_PL_NAME, "--user"])
+        result = runner.invoke(
+            app, ["search", "playlist", TEST_PL_NAME, "--user"]
+        )
 
         # Clean up
         spot.sp.current_user_unfollow_playlist(pl_id1)
@@ -328,7 +332,9 @@ class TestSearch:
     def test_search_public(self):
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
-        result = runner.invoke(app, ["search", "Massive Drum & Bass"])
+        result = runner.invoke(
+            app, ["search", "playlist", "Massive Drum & Bass"]
+        )
 
         assert result.exit_code == 0
         assert Search.search_pub in result.stdout
@@ -340,7 +346,7 @@ class TestSearch:
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
         result = runner.invoke(
-            app, ["search", "Massive Drum & Bass", "--limit", 5]
+            app, ["search", "playlist", "Massive Drum & Bass", "--limit", 5]
         )
 
         assert result.exit_code == 0
@@ -353,7 +359,7 @@ class TestSearch:
         if USE_DUMMY_WRAPPER:
             spot.create_playlist("Massive Drum & Bass")
         result = runner.invoke(
-            app, ["search", "Massive Drum & Bass", "--market", "GB"]
+            app, ["search", "playlist", "Massive Drum & Bass", "--market", "GB"]
         )
 
         assert result.exit_code == 0
@@ -372,5 +378,6 @@ if __name__ == "__main__":
     # TestUnfollow().test_unfollow_artist_by_name()
     # TestUnfollow().test_unfollow_artist_by_name()
     # TestUnfollow().test_unfollow_artist_by_id()
-    TestSearch().test_search_multiple_exist()
+    # TestSearch().test_search_multiple_exist()
+    TestSearch().test_search_name_provided_and_playlist_exists()
     pass

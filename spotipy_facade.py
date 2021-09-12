@@ -40,20 +40,20 @@ class SpotipySpotifyFacade:
             )
         )
         self.user_id = self.sp.me()["id"]
-        self.items = {"playlist": Playlist, "artist": Artist}
+        self.types = {"playlist": Playlist, "artist": Artist}
 
     def get_item(self, item_type, item_id):
-        return self.items[item_type](self.sp, item_id)
+        return self.types[item_type](self.sp, item_id)
 
-    def search_public_playlist(self, query, limit=10, market=None):
-        """Search public playlists."""
-        query = query.replace(" ", "+")
-        results = self.sp.search(
-            q=query, limit=limit, offset=0, type="playlist", market=market
-        )
-        if results is not None:
-            return results["playlists"]["items"]
-        return []
+    def search_public(self, item_type, query, limit=10, offset=0, market=None):
+        raw_items = self.sp.search(query, limit, offset, item_type, market)
+        items = []
+        for raw_item in raw_items[item_type + "s"]["items"]:
+            if raw_item is None:
+                continue
+            item_id = raw_item["id"]
+            items.append(self.types[item_type](self.sp, item_id, info=raw_item))
+        return items
 
     def create_playlist(
         self,
@@ -93,7 +93,7 @@ class SpotipySpotifyFacade:
         return name
 
     def get_user_items(self, item_type):
-        item_class = self.items[item_type]
+        item_class = self.types[item_type]
         return item_class.get_followed_items(self.sp)
 
     def following_playlist(self, playlist_id):
@@ -143,7 +143,7 @@ class SpotipySpotifyFacade:
     def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
-        item_class = self.items[item_type]
+        item_class = self.types[item_type]
         items = item_class.get_followed_items(self.sp)
         selected_items = []
         for item in items:
@@ -182,80 +182,6 @@ class SpotipySpotifyFacade:
                 selected_playlists.append(playlist)
 
         return None if len(selected_playlists) == 0 else selected_playlists
-
-    def get_artist(self, name: str = None, artist_id: str = None) -> List[dict]:
-        selected_artists = []
-        artists = self.sp.current_user_followed_artists()
-        for artist in artists["artists"]["items"]:
-            cur_name, cur_id = artist["name"], artist["id"]
-            if (
-                name is not None and name.rstrip() == cur_name.strip()
-            ) or artist_id == cur_id:
-                selected_artists.append(artist)
-
-        return None if len(selected_artists) == 0 else selected_artists
-
-    @staticmethod
-    def stringify_playlist(playlist) -> str:
-        """Extract relevant info about a playlist from the dict 'playlist' as a string"""
-        info = ["-----------------------"]
-        info += [f"Name:\t\t{playlist['name']}"]
-
-        desc = playlist["description"]
-        wrapped_desc = textwrap.wrap(
-            "Description:\t" + desc,
-            width=64,
-            initial_indent="",
-            subsequent_indent="\t\t",
-        )
-        info.extend(wrapped_desc)
-        info += [f"Owner:\t\t{playlist['owner']['display_name']}"]
-        info += [f"Track count:\t{playlist['tracks']['total']}"]
-        info += [f"Playlist id:\t{playlist['id']}"]
-        info += [f"Owner id:\t{playlist['owner']['id']}"]
-        info += [f"Url: {playlist['external_urls']['spotify']}"]
-
-        return "\n".join(info)
-
-    @staticmethod
-    def stringify_artist(artist) -> str:
-        """Extract relevant info about a artist from the dict 'artist' as a string"""
-        info = ["-----------------------"]
-        info += [f"Name:\t\t{artist['name']}"]
-        info += [f"id:\t{artist['id']}"]
-        genres = artist["genres"]
-        wrapped_genres = textwrap.wrap(
-            "Genres:\t" + ",".join(genres),
-            width=64,
-            initial_indent="",
-            subsequent_indent="\t\t",
-        )
-        info.extend(wrapped_genres)
-        info += [f"Followers: {artist['followers']['total']}"]
-        info += [f"Url: {artist['external_urls']['spotify']}"]
-
-        return "\n".join(info)
-
-    @staticmethod
-    def print_playlists(print_func, playlists):
-        if playlists is None:
-            print_func("No playlists to print!")
-            return
-
-        for pl_list in playlists:
-            if type(pl_list) is Playlist:
-                print_func(pl_list)
-            else:
-                print_func(SpotipySpotifyFacade.stringify_playlist(pl_list))
-
-    @staticmethod
-    def print_artists(print_func, artists):
-        if artists is None:
-            print_func("No artists to print!")
-            return
-
-        for artist in artists:
-            print_func(SpotipySpotifyFacade.stringify_artist(artist))
 
     @staticmethod
     def print_items(print_func, items):
