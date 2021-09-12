@@ -2,7 +2,6 @@ import re
 
 from typer.testing import CliRunner
 from app_strings import General, Create, Search, Unfollow, Follow
-from dummy_spotipy import DummySpotipy
 from spotipy_facade import USE_DUMMY_WRAPPER
 from spotify_cli import spot, app
 
@@ -139,25 +138,33 @@ class TestFollow:
 
 
 class TestUnfollow:
-    def test_unfollow_artist_by_name(self):
-        test_name = "Weezer"
-        item_type = "artist"
-        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
-        if USE_DUMMY_WRAPPER:
-            spot.sp.create_non_followed_artist(artist_id, test_name)
-        spot.follow_artist(artist_id)
-        result = runner.invoke(
-            app, ["unfollow", item_type, test_name, "--no-prompt"]
-        )
 
-        following = spot.sp.current_user_following_artists([artist_id])[0]
+    # NOTE: Tests involving name are commented out because I've stripped out
+    #       being able to use NAME to specify what items to unfollow... For now.
+    #       I'm trying switch to using interfaces to do things, and the added complexity from
+    #       trying to support selection by name is getting in my way.
+    #       These tests will come back at a later date, probably.
 
-        assert result.exit_code == 0
-        assert not following
-        assert (
-            Unfollow.unfollowed_item.format(test_name, artist_id)
-            in result.stdout
-        )
+    # def test_unfollow_artist_by_name(self):
+    #     test_name = "Weezer"
+    #     item_type = "artist"
+    #     artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+    #     if USE_DUMMY_WRAPPER:
+    #         spot.sp.create_non_followed_artist(artist_id, test_name)
+    #     spot.get_followable(item_type, artist_id).follow()
+    #     #spot.follow_artist(artist_id)
+    #     result = runner.invoke(
+    #         app, ["unfollow", item_type, test_name, "--no-prompt"]
+    #     )
+
+    #     following = spot.sp.current_user_following_artists([artist_id])[0]
+
+    #     assert result.exit_code == 0
+    #     assert not following
+    #     assert (
+    #         Unfollow.unfollowed_item.format(test_name, artist_id)
+    #         in result.stdout
+    #     )
 
     def test_unfollow_artist_by_id(self):
         test_name = "Weezer"
@@ -167,7 +174,7 @@ class TestUnfollow:
             spot.sp.create_non_followed_artist(artist_id, test_name)
         spot.follow_artist(artist_id)
         result = runner.invoke(
-            app, ["unfollow", item_type, "--id", artist_id, "--no-prompt"]
+            app, ["unfollow", item_type, artist_id, "--no-prompt"]
         )
 
         following = spot.sp.current_user_following_artists([artist_id])[0]
@@ -179,15 +186,15 @@ class TestUnfollow:
             in result.stdout
         )
 
-    def test_unfollow_no_name_or_id(self):
-        result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
-        assert result.exit_code == 1
-        assert General.spec_name_id in result.stdout
+    # def test_unfollow_no_name_or_id(self):
+    #     result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
+    #     assert result.exit_code == 1
+    #     assert General.spec_name_id in result.stdout
 
     def test_unfollow_pl_prompt_cancled(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
         result = runner.invoke(
-            app, ["unfollow", "playlist", TEST_PL_NAME], input="n\n"
+            app, ["unfollow", "playlist", pl_id], input="n\n"
         )
 
         # Cleanup
@@ -199,7 +206,7 @@ class TestUnfollow:
         pl_id = spot.create_playlist(TEST_PL_NAME)
 
         result = runner.invoke(
-            app, ["unfollow", "playlist", TEST_PL_NAME], input="y\n"
+            app, ["unfollow", "playlist", pl_id], input="y\n"
         )
         pl_exists = spot.check_exists(pl_id)
 
@@ -214,30 +221,31 @@ class TestUnfollow:
         )
         assert not pl_exists
 
-    def test_unfollow_pl_by_id(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
+    # Redundant for now, since ID is the only thing supported
+    # def test_unfollow_pl_by_id(self):
+    #     pl_id = spot.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(
-            app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
-        )
-        pl_exists = spot.check_exists(pl_id)
+    #     result = runner.invoke(
+    #         app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
+    #     )
+    #     pl_exists = spot.check_exists(pl_id)
 
-        # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
+    #     # Cleanup, if needed
+    #     if pl_exists:
+    #         spot.unfollow_playlist(pl_id)
 
-        assert result.exit_code == 0
-        assert (
-            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-            in result.stdout
-        )
-        assert not pl_exists
+    #     assert result.exit_code == 0
+    #     assert (
+    #         Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
+    #         in result.stdout
+    #     )
+    #     assert not pl_exists
 
     def test_unfollow_pl_no_prompt(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
 
         result = runner.invoke(
-            app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
+            app, ["unfollow", "playlist", "--no-prompt", pl_id]
         )
         pl_exists = spot.check_exists(pl_id)
 
@@ -255,34 +263,33 @@ class TestUnfollow:
     def test_unfollow_pl_DNE(self):
         item_type = "playlist"
         result = runner.invoke(
-            app, ["unfollow", item_type, TEST_PL_NAME], input="y\n"
+            app, ["unfollow", item_type, "DNE_ID"], input="y\n"
         )
         assert result.exit_code == 1
         assert (
-            General.item_DNE.format(item_type, "name", TEST_PL_NAME)
-            in result.stdout
+            General.item_DNE.format(item_type, "id", "DNE_ID") in result.stdout
         )
 
-    def test_unfollow_pl_name_clash_no_prompt(self):
-        """
-        Test deleting when multiple lists exist with same name and
-        --no-prompt flag was used ()
-        If multiple lists exist with given name, cli does not know
-        which to unfollow. It should exit with code 1, and tell user.
-        """
-        pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        pl_id2 = spot.create_playlist(TEST_PL_NAME)
+    # def test_unfollow_pl_name_clash_no_prompt(self):
+    #     """
+    #     Test deleting when multiple lists exist with same name and
+    #     --no-prompt flag was used ()
+    #     If multiple lists exist with given name, cli does not know
+    #     which to unfollow. It should exit with code 1, and tell user.
+    #     """
+    #     pl_id1 = spot.create_playlist(TEST_PL_NAME)
+    #     pl_id2 = spot.create_playlist(TEST_PL_NAME)
 
-        result = runner.invoke(
-            app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
-        )
+    #     result = runner.invoke(
+    #         app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
+    #     )
 
-        # Cleanup
-        spot.unfollow_playlist(pl_id1)
-        spot.unfollow_playlist(pl_id2)
+    #     # Cleanup
+    #     spot.unfollow_playlist(pl_id1)
+    #     spot.unfollow_playlist(pl_id2)
 
-        assert result.exit_code == 0
-        assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
+    #     assert result.exit_code == 0
+    #     assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
 
 
 class TestSearch:
@@ -312,8 +319,8 @@ class TestSearch:
         result = runner.invoke(app, ["search", TEST_PL_NAME, "--user"])
 
         # Clean up
-        spot.unfollow_playlist(pl_id1)
-        spot.unfollow_playlist(pl_id2)
+        spot.sp.current_user_unfollow_playlist(pl_id1)
+        spot.sp.current_user_unfollow_playlist(pl_id2)
 
         assert result.exit_code == 0
         assert Search.num_items_found.format(2, TEST_PL_NAME) in result.stdout
@@ -363,5 +370,7 @@ if __name__ == "__main__":
     # TestFollow().test_follow_pl_by_id()
     # TestFollow().test_follow_artist_by_id()
     # TestUnfollow().test_unfollow_artist_by_name()
-    TestUnfollow().test_unfollow_artist_by_name()
-    TestUnfollow().test_unfollow_artist_by_id()
+    # TestUnfollow().test_unfollow_artist_by_name()
+    # TestUnfollow().test_unfollow_artist_by_id()
+    TestSearch().test_search_multiple_exist()
+    pass

@@ -59,9 +59,15 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item (playlist or artist)"""
-    item = spot.get_followable_instance(item_type, item_id)
-    name = item.name
+    item = spot.get_item(item_type, item_id)
+
+    # Check if item_id is valid
+    if item.info is None:
+        typer.echo(General.item_DNE.format(item_type, "id", item_id))
+        sys.exit(1)
+
     item.follow()
+    name = item.name
     typer.echo(Follow.followed.format(item_type, name, item_id))
     sys.exit(0)
 
@@ -71,8 +77,7 @@ def unfollow(
     item_type: str = typer.Argument(
         ..., help="Item type to follow: 'playlist' or 'artist'"
     ),
-    name: str = typer.Argument("", help=""),
-    item_id: str = typer.Option("", "--id", help=Unfollow.id_help),
+    item_id: str = typer.Argument(..., help=Unfollow.id_help),
     no_prompt: bool = typer.Option(
         False,
         "--no-prompt",
@@ -83,49 +88,27 @@ def unfollow(
     Unfollow an item; remove it from your library.
     This "deletes" playlists you've created.
     """
-    if name == "" and item_id == "":
-        typer.echo(General.spec_name_id)
+    # Retrieve item matching item_id
+    item = spot.get_item(item_type, item_id)
+
+    # Check if item_id is valid. If it isn't item.info will be None
+    if item.info is None:
+        typer.echo(General.item_DNE.format(item_type, "id", item_id))
         sys.exit(1)
 
-    # Retrieve any items matching 'name' or 'pl_id'
-    items = spot.get_followed_item(
-        item_type=item_type, item_name=name, item_id=item_id
-    )
-
-    # Report how many items were found matching 'name' if name was used
-    if item_id == "" and items is not None:
-        typer.echo(General.num_items_found.format(len(items), name))
-
-        # If there is more than one item with the same name, list them out
-        if len(items) > 1:
-            spot.print_items(item_type, typer.echo, items)
-
-    # Exit if there are duplicate item names
-    # User will have to specify with ID which item to unfollow
-    if items is not None and len(items) > 1:
-        typer.echo(Unfollow.dupes_found.format(name))
-        sys.exit(0)
-
-    # Exit if the name or id given does not match any given item
-    spec_type = "name" if item_id == "" else "id"
-    specifier = name if item_id == "" else item_id
-    if items is None:
-        typer.echo(General.item_DNE.format(item_type, spec_type, specifier))
-        typer.echo(General.op_canceled)
-        sys.exit(1)
+    item_name = item.name
 
     # If '--no-prompt' was not used, confirm Unfollow with user
     confirm_Unfollow = False
     if not no_prompt:
         confirm_Unfollow = typer.confirm(
-            text=Unfollow.confirm.format(spec_type, specifier)
+            text=Unfollow.confirm.format(item_type, item_name, item_id)
         )
     else:
         confirm_Unfollow = True
 
     if confirm_Unfollow:
-        item_name, item_id = items[0].name, items[0].id
-        items[0].unfollow()
+        item.unfollow()
         typer.echo(Unfollow.unfollowed_item.format(item_name, item_id))
         sys.exit(0)
 
@@ -143,7 +126,7 @@ def search(
     market: str = typer.Option(None, help=Search.market_help),
 ):
     """
-    Search for followalable items.
+    Search for items.
 
     To limit search to just items that a user follows use the '--user' flag
     Don't provide a name and this command will list all playlists you follow.
@@ -155,7 +138,6 @@ def search(
     if query == "" and user:
         typer.echo(Search.list_all)
         spot.print_items(
-            item_type=item_type,
             print_func=typer.echo,
             items=spot.get_user_items(item_type),
         )
@@ -170,7 +152,7 @@ def search(
             sys.exit(1)
         else:
             typer.echo(Search.num_items_found.format(len(items), query))
-            spot.print_playlists(print_func=typer.echo, playlists=items)
+            spot.print_items(print_func=typer.echo, items=items)
 
     # Search through all public playlists
     else:

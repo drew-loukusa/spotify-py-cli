@@ -38,20 +38,19 @@ class Follow:
 
 class Unfollow:
     id_help = "Use id to specify item to unfollow"
-    no_prompt_help = (
-        "Do not prompt user to confirm unfollow. Will be ignored if NAME "
-        + "is supplied and multiple items exist with the same name.\n"
-        + "See '--all' for deleting multiple lists that share the same name."
-    )
+    # no_prompt_help = (
+    #     "Do not prompt user to confirm unfollow. Will be ignored if NAME "
+    #     + "is supplied and multiple items exist with the same name.\n"
+    # )
+
+    no_prompt_help = "Do not prompt user to confirm unfollow."
 
     dupes_found = (
         "Multiple items were found with name: {}."
         + "Please specify with '--id' which item to unfollow."
     )
 
-    confirm = "Are you sure you want to unfollow the ID: {}, item: {}?"
-
-    unfollowed_all = "unfollowed all items associated with name: {}"
+    confirm = "Are you sure you want to unfollow the {} '{}', id: {}?"
     unfollowed_item = "unfollowed item: {}, ID: {}"
 
 

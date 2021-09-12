@@ -4,6 +4,7 @@ from typing import List
 import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
+from concrete import Playlist, Artist
 from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
@@ -18,100 +19,10 @@ SCOPE = "playlist-modify-private \
 # If testing locally, use the dummy wrapper
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
-
-class Playlist:
-    def __init__(self, sp: spotipy.Spotify, item_id: str):
-        self.sp = sp
-        self.info = sp.playlist(item_id)
-        self.id = item_id
-        self.name = self.info["name"]
-
-    def follow(self):
-        self.sp.current_user_follow_playlist(playlist_id=self.id)
-
-    def unfollow(self):
-        self.sp.current_user_unfollow_playlist(playlist_id=self.id)
-
-    def __repr__(self):
-        """Extract relevant info about a playlist from the dict 'playlist' as a string"""
-        info = ["-----------------------"]
-        info += [f"Name:\t\t{self.info['name']}"]
-
-        desc = self.info["description"]
-        wrapped_desc = textwrap.wrap(
-            "Description:\t" + desc,
-            width=64,
-            initial_indent="",
-            subsequent_indent="\t\t",
-        )
-        info.extend(wrapped_desc)
-        info += [f"Owner:\t\t{self.info['owner']['display_name']}"]
-        info += [f"Track count:\t{self.info['tracks']['total']}"]
-        info += [f"Playlist id:\t{self.info['id']}"]
-        info += [f"Owner id:\t{self.info['owner']['id']}"]
-        info += [f"Url: {self.info['external_urls']['spotify']}"]
-
-        return "\n".join(info)
-
-    @staticmethod
-    def get_followed_item(sp, item_name: str = None, item_id: str = None):
-        playlists = sp.current_user_playlists()
-        selected_playlists = []
-        for playlist in playlists["items"]:
-            item_name, cur_id = playlist["name"], playlist["id"]
-            if (
-                item_name is not None and item_name.strip() == item_name.strip()
-            ) or item_id == cur_id:
-                selected_playlists.append(Playlist(sp, cur_id))
-
-        return None if len(selected_playlists) == 0 else selected_playlists
-
-
-class Artist:
-    def __init__(self, sp: spotipy.Spotify, item_id: str):
-        self.sp = sp
-        self.info = sp.artist(item_id)
-        self.id = item_id
-        self.name = self.info["name"]
-
-    def follow(self):
-        self.sp.user_follow_artists([self.id])
-
-    def unfollow(self):
-        self.sp.user_unfollow_artists([self.id])
-
-    def __repr__(self):
-        """Extract relevant info about a artist from the dict 'artist' as a string"""
-        info = ["-----------------------"]
-        info += [f"Name:\t\t{self.info['name']}"]
-        info += [f"id:\t{self.info['id']}"]
-        genres = self.info["genres"]
-        wrapped_genres = textwrap.wrap(
-            "Genres:\t" + ",".join(genres),
-            width=64,
-            initial_indent="",
-            subsequent_indent="\t\t",
-        )
-        info.extend(wrapped_genres)
-        info += [f"Followers: {self.info['followers']['total']}"]
-        info += [f"Url: {self.info['external_urls']['spotify']}"]
-
-        return "\n".join(info)
-
-    @staticmethod
-    def get_followed_item(
-        sp, item_name: str = None, item_id: str = None
-    ) -> List[dict]:
-        selected_artists = []
-        artists = sp.current_user_followed_artists()
-        for artist in artists["artists"]["items"]:
-            cur_name, cur_id = artist["name"], artist["id"]
-            if (
-                item_name is not None and item_name.rstrip() == cur_name.strip()
-            ) or item_id == cur_id:
-                selected_artists.append(Artist(sp, cur_id))
-
-        return None if len(selected_artists) == 0 else selected_artists
+# Playlist and Artist currently implement followable.
+# More possible interfaces... Editable, Searchable
+# If I want to add more interfaces, I should formally define each one using the ABC module, so that
+# I can denote with multiple inheritance which interfaces each item implements
 
 
 class SpotipySpotifyFacade:
@@ -129,10 +40,10 @@ class SpotipySpotifyFacade:
             )
         )
         self.user_id = self.sp.me()["id"]
-        self.followables = {"playlist": Playlist, "artist": Artist}
+        self.items = {"playlist": Playlist, "artist": Artist}
 
-    def get_followable_instance(self, item_type, item_id):
-        return self.followables[item_type](self.sp, item_id)
+    def get_item(self, item_type, item_id):
+        return self.items[item_type](self.sp, item_id)
 
     def search_public_playlist(self, query, limit=10, market=None):
         """Search public playlists."""
@@ -182,32 +93,8 @@ class SpotipySpotifyFacade:
         return name
 
     def get_user_items(self, item_type):
-        if item_type == "playlist":
-            return self.get_user_playlists()
-        elif item_type == "artist":
-            return self.get_user_artists()
-
-    def get_user_playlists(self):
-        """Gets all of a users followed playlists"""
-        res = self.sp.user_playlists(self.user_id)
-        if res is not None:
-            return res["items"]
-        return res
-
-    def get_user_artists(self):
-        """Gets all of a users follewed artists"""
-        res = self.sp.current_user_followed_artists()
-        if res is not None:
-            return res["artists"]["items"]
-        return res
-
-    def list_playlists(self) -> None:
-        """Lists all of a users playlists"""
-
-        playlists = self.get_user_playlists()
-        if playlists is not None:
-            for pl_list in playlists:
-                print(pl_list["name"], pl_list["id"])
+        item_class = self.items[item_type]
+        return item_class.get_followed_items(self.sp)
 
     def following_playlist(self, playlist_id):
         return self.sp.playlist_is_following(playlist_id, [self.user_id])[0]
@@ -256,8 +143,17 @@ class SpotipySpotifyFacade:
     def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
-        item = self.followables[item_type]
-        return item.get_followed_item(self.sp, item_name, item_id)
+        item_class = self.items[item_type]
+        items = item_class.get_followed_items(self.sp)
+        selected_items = []
+        for item in items:
+            name, cur_id = item.name, item.id
+            if (
+                item_name is not None and name.strip() == item_name.strip()
+            ) or item_id == cur_id:
+                selected_items.append(item)
+
+        return None if len(selected_items) == 0 else selected_items
 
     def get_unfollowed_item():
         # This can be a seperate function, or you can make this an argument of 'get_followed_item' and rename it back to 'get_item'
@@ -362,8 +258,6 @@ class SpotipySpotifyFacade:
             print_func(SpotipySpotifyFacade.stringify_artist(artist))
 
     @staticmethod
-    def print_items(item_type, print_func, items):
-        if item_type == "playlist":
-            SpotipySpotifyFacade.print_playlists(print_func, items)
-        elif item_type == "artist":
-            SpotipySpotifyFacade.print_artists(print_func, items)
+    def print_items(print_func, items):
+        for item in items:
+            print_func(item)
