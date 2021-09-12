@@ -1,24 +1,25 @@
 import textwrap
 import spotipy
-from interfaces import Followable, Utils
+from spotipy import Spotify
+from spotipy.exceptions import SpotifyException
+from interfaces import Item, IFollowable
 
-class Playlist(Followable, Utils):
-    def __init__(self, sp: spotipy.Spotify, item_id: str, info = None):
-        self.id = item_id
-        self.sp = sp
-        self.info = self._get_item() if info is None else info 
-        self.name = None if self.info is None else self.info["name"]
-        self.msg = ""
 
-    def _get_item(self):
+class Playlist(Item, IFollowable):
+    def __init__(self, sp: Spotify, item_id: str, info=None):
+        info = self._get_item(sp, item_id) if info is None else info
+        name = None if info is None else info["name"]
+        super().__init__(item_id, sp, info, name)
+
+    def _get_item(self, sp, item_id):
         try:
-            return self.sp.playlist(self.id)
-        except spotipy.exceptions.SpotifyException as e:
+            return sp.playlist(item_id)
+        except SpotifyException as e:
             if e.http_status != 404:
-                raise e 
+                raise e
             else:
                 self.msg = "Invalid Playlist ID"
-                return None 
+                return None
 
     def follow(self):
         self.sp.current_user_follow_playlist(playlist_id=self.id)
@@ -27,7 +28,7 @@ class Playlist(Followable, Utils):
         self.sp.current_user_unfollow_playlist(playlist_id=self.id)
 
     def __repr__(self):
-        info = self.info 
+        info = self.info
         pl_str = ["-----------------------"]
         pl_str += [f"Name:\t\t{info['name']}"]
 
@@ -52,28 +53,27 @@ class Playlist(Followable, Utils):
         playlists = []
         res = sp.current_user_playlists()
         if res is None:
-            return None 
+            return None
         for playlist in res["items"]:
             playlists.append(Playlist(sp, playlist["id"], info=playlist))
         return playlists
 
-class Artist(Followable, Utils):
-    def __init__(self, sp: spotipy.Spotify, item_id: str, info = None):
-        self.id = item_id
-        self.sp = sp
-        self.info = self._get_item() if info is None else info 
-        self.name = None if self.info is None else self.info["name"]
-        self.msg = ""
 
-    def _get_item(self):
+class Artist(Item):  # , IFollowable):
+    def __init__(self, sp: Spotify, item_id: str, info=None):
+        info = self._get_item(sp, item_id) if info is None else info
+        name = None if info is None else info["name"]
+        super().__init__(item_id, sp, info, name)
+
+    def _get_item(self, sp: Spotify, item_id):
         try:
-            return self.sp.artist(self.id)
-        except spotipy.exceptions.SpotifyException as e:
+            return sp.artist(item_id)
+        except SpotifyException as e:
             if e.http_status != 404:
-                raise e 
+                raise e
             else:
                 self.msg = "Invalid Artist ID"
-                return None 
+                return None
 
     def follow(self):
         self.sp.user_follow_artists([self.id])
@@ -82,7 +82,7 @@ class Artist(Followable, Utils):
         self.sp.user_unfollow_artists([self.id])
 
     def __repr__(self):
-        info = self.info 
+        info = self.info
         art_str = ["-----------------------"]
         art_str += [f"Name:\t\t{info['name']}"]
         art_str += [f"id:\t{info['id']}"]
@@ -103,8 +103,8 @@ class Artist(Followable, Utils):
     def get_followed_items(sp):
         artists = []
         res = sp.current_user_followed_artists()
-        if res is None: 
-            return None 
+        if res is None:
+            return None
 
         for artist in res["artists"]["items"]:
             artists.append(Artist(sp, artist["id"], artist))

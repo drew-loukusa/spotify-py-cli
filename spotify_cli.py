@@ -1,4 +1,6 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
+from concrete import Playlist
+from interfaces import IFollowable
 import sys
 import typer
 from spotipy_facade import SpotipySpotifyFacade
@@ -59,7 +61,7 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item (playlist or artist)"""
-    item = spot.get_item(item_type, item_id)
+    item: IFollowable = spot.get_item(item_type, item_id)
 
     # Check if item_id is valid
     if item.info is None:

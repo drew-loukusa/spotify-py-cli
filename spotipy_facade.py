@@ -1,5 +1,4 @@
 """This module contains a facade class built on top of spotipy Spotify wrapper"""
-import textwrap
 from typing import List
 import spotipy
 from decouple import config

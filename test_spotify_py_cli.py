@@ -377,7 +377,7 @@ if __name__ == "__main__":
     # TestFollow().test_follow_artist_by_id()
     # TestUnfollow().test_unfollow_artist_by_name()
     # TestUnfollow().test_unfollow_artist_by_name()
-    # TestUnfollow().test_unfollow_artist_by_id()
+    TestUnfollow().test_unfollow_artist_by_id()
     # TestSearch().test_search_multiple_exist()
-    TestSearch().test_search_name_provided_and_playlist_exists()
+    # TestSearch().test_search_name_provided_and_playlist_exists()
     pass
