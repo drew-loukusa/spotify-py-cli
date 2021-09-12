@@ -1,5 +1,4 @@
 import textwrap
-import spotipy
 from spotipy import Spotify
 from spotipy.exceptions import SpotifyException
 from interfaces import Item, IFollowable
@@ -11,7 +10,7 @@ class Playlist(Item, IFollowable):
         name = None if info is None else info["name"]
         super().__init__(item_id, sp, info, name)
 
-    def _get_item(self, sp, item_id):
+    def _get_item(self, sp: Spotify, item_id: str):
         try:
             return sp.playlist(item_id)
         except SpotifyException as e:
@@ -49,7 +48,7 @@ class Playlist(Item, IFollowable):
         return "\n".join(pl_str)
 
     @staticmethod
-    def get_followed_items(sp):
+    def get_followed_items(sp: Spotify):
         playlists = []
         res = sp.current_user_playlists()
         if res is None:
@@ -100,7 +99,7 @@ class Artist(Item):  # , IFollowable):
         return "\n".join(art_str)
 
     @staticmethod
-    def get_followed_items(sp):
+    def get_followed_items(sp: Spotify):
         artists = []
         res = sp.current_user_followed_artists()
         if res is None:

@@ -1,64 +1,61 @@
 """
 This module contains interfaces and an abstract base class.
 """
-import abc
+from abc import ABCMeta, abstractmethod, abstractstaticmethod
 
-import spotipy
+from spotipy import Spotify
 
 # Abstract base class
-class Item(metaclass=abc.ABCMeta):
+class Item(metaclass=ABCMeta):
     """
-    Item inherited by all items (Playlist, Artist, Album, Track, Episode, Show, etc),
+    Item should be inherited by all items (Playlist, Artist, Album, Track, Episode, Show, etc),
     and the items implement different interfaces as needed
     """
 
-    def __init__(
-        self, item_id: str, sp: spotipy.Spotify, info: dict, name: str
-    ):
+    def __init__(self, item_id: str, sp: Spotify, info: dict, name: str):
         self.id = item_id
         self.sp = sp
         self.info = info
         self.name = name
         self.msg = ""
 
-    @abc.abstractmethod
+    @abstractmethod
     def __repr__(self) -> str:
         """Make item printable"""
         raise NotImplementedError
 
-    @abc.abstractmethod
+    @abstractmethod
     def _get_item(self):
         """Retreive an item from spotify, return item info or None"""
         raise NotImplementedError
 
 
 # Interface
-class IFollowable(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
+class IFollowable(metaclass=ABCMeta):
+    @abstractmethod
     def follow(self):
         """Follow a followable item"""
         raise NotImplementedError
 
-    @abc.abstractclassmethod
+    @abstractmethod
     def unfollow(self):
         """Unfollow a followable item"""
         raise NotImplementedError
 
-    @staticmethod
-    @abc.abstractmethod
+    @abstractstaticmethod
     def get_followed_items(self):
         """Get all of a users followable items"""
         raise NotImplementedError
 
 
 # Interface
-class ISaveable(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
+class ISaveable(metaclass=ABCMeta):
+    @abstractmethod
     def save(self):
         """Save a saveable item"""
         raise NotImplementedError
 
-    @abc.abstractclassmethod
+    @abstractmethod
     def unsave(self):
         """Unsave a saveable item"""
         raise NotImplementedError
