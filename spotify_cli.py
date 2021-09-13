@@ -1,6 +1,6 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 from concrete import Playlist
-from interfaces import IFollowable
+from interfaces import IFollowable, Item
 import sys
 import typer
 from spotipy_facade import SpotipySpotifyFacade
@@ -61,16 +61,21 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item (playlist or artist)"""
-    item: IFollowable = spot.get_item(item_type, item_id)
+    item: Item = spot.get_item(item_type, item_id)
 
-    # Check if item_id is valid
+    # Check that item is followable
+    if not hasattr(item, "follow"):
+        typer.echo(f"Item of type '{item_type}' cannot be followed!")
+        sys.exit(1)
+
+    # Check if the given item_id corresponds to an actual item
     if item.info is None:
         typer.echo(General.item_DNE.format(item_type, "id", item_id))
         sys.exit(1)
 
     item.follow()
-    name = item.name
-    typer.echo(Follow.followed.format(item_type, name, item_id))
+
+    typer.echo(Follow.followed.format(item_type, item.name, item_id))
     sys.exit(0)
 
 
@@ -93,25 +98,27 @@ def unfollow(
     # Retrieve item matching item_id
     item = spot.get_item(item_type, item_id)
 
+    if not hasattr(item, "unfollow"):
+        typer.echo(f"Item of type '{item_type}' cannot be unfollowed!")
+        sys.exit(1)
+
     # Check if item_id is valid. If it isn't item.info will be None
     if item.info is None:
         typer.echo(General.item_DNE.format(item_type, "id", item_id))
         sys.exit(1)
 
-    item_name = item.name
-
     # If '--no-prompt' was not used, confirm Unfollow with user
     confirm_Unfollow = False
     if not no_prompt:
         confirm_Unfollow = typer.confirm(
-            text=Unfollow.confirm.format(item_type, item_name, item_id)
+            text=Unfollow.confirm.format(item_type, item.name, item_id)
         )
     else:
         confirm_Unfollow = True
 
     if confirm_Unfollow:
         item.unfollow()
-        typer.echo(Unfollow.unfollowed_item.format(item_name, item_id))
+        typer.echo(Unfollow.unfollowed_item.format(item.name, item_id))
         sys.exit(0)
 
     typer.echo(General.op_canceled)
