@@ -6,19 +6,9 @@ from interfaces import Item, IFollowable
 
 class Playlist(Item, IFollowable):
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        info = self._get_item(sp, item_id) if info is None else info
+        info = Playlist.get_item(sp, item_id) if info is None else info
         name = None if info is None else info["name"]
         super().__init__(item_id, sp, info, name)
-
-    def _get_item(self, sp: Spotify, item_id: str):
-        try:
-            return sp.playlist(item_id)
-        except SpotifyException as e:
-            if e.http_status != 404:
-                raise e
-            else:
-                self.msg = "Invalid Playlist ID"
-                return None
 
     def follow(self):
         self.sp.current_user_follow_playlist(playlist_id=self.id)
@@ -48,6 +38,10 @@ class Playlist(Item, IFollowable):
         return "\n".join(pl_str)
 
     @staticmethod
+    def get_item(sp: Spotify, item_id: str):
+        return Item._get_item(sp.playlist, item_id)
+
+    @staticmethod
     def get_followed_items(sp: Spotify):
         playlists = []
         res = sp.current_user_playlists()
@@ -58,21 +52,11 @@ class Playlist(Item, IFollowable):
         return playlists
 
 
-class Artist(Item):  # , IFollowable):
+class Artist(Item, IFollowable):
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        info = self._get_item(sp, item_id) if info is None else info
+        info = Artist.get_item(sp, item_id) if info is None else info
         name = None if info is None else info["name"]
         super().__init__(item_id, sp, info, name)
-
-    def _get_item(self, sp: Spotify, item_id):
-        try:
-            return sp.artist(item_id)
-        except SpotifyException as e:
-            if e.http_status != 404:
-                raise e
-            else:
-                self.msg = "Invalid Artist ID"
-                return None
 
     def follow(self):
         self.sp.user_follow_artists([self.id])
@@ -97,6 +81,10 @@ class Artist(Item):  # , IFollowable):
         art_str += [f"Url: {info['external_urls']['spotify']}"]
 
         return "\n".join(art_str)
+
+    @staticmethod
+    def get_item(sp: Spotify, item_id: str):
+        return Item._get_item(sp.artist, item_id)
 
     @staticmethod
     def get_followed_items(sp: Spotify):

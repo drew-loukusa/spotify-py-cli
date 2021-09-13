@@ -3,7 +3,7 @@ This module contains interfaces and an abstract base class.
 """
 from abc import ABCMeta, abstractmethod, abstractstaticmethod
 
-from spotipy import Spotify
+from spotipy import Spotify, SpotifyException
 
 # Abstract base class
 class Item(metaclass=ABCMeta):
@@ -24,10 +24,23 @@ class Item(metaclass=ABCMeta):
         """Make item printable"""
         raise NotImplementedError
 
-    @abstractmethod
-    def _get_item(self):
+    @abstractstaticmethod
+    def get_item(sp: Spotify, item_id: str):
         """Retreive an item from spotify, return item info or None"""
         raise NotImplementedError
+
+    # Concrete classes invoke this when defining an implementation of
+    # 'get_item' and pass in their specific method for getting their
+    # item info from the Spotify instance
+    @staticmethod
+    def _get_item(concrete_getter, item_id):
+        try:
+            return concrete_getter(item_id)
+        except SpotifyException as e:
+            if e.http_status != 404:
+                raise e
+            else:
+                return None
 
 
 # Interface
