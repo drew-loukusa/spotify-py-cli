@@ -1,6 +1,5 @@
 import textwrap
 from spotipy import Spotify
-from spotipy.exceptions import SpotifyException
 from interfaces import Item, IFollowable
 
 
@@ -15,6 +14,9 @@ class Playlist(Item, IFollowable):
 
     def unfollow(self):
         self.sp.current_user_unfollow_playlist(playlist_id=self.id)
+
+    def following(self):
+        return self.sp.playlist_is_following(self.id, [self.sp.me()["id"]])[0]
 
     def __repr__(self):
         info = self.info
@@ -63,6 +65,9 @@ class Artist(Item, IFollowable):
 
     def unfollow(self):
         self.sp.user_unfollow_artists([self.id])
+
+    def following(self):
+        return self.sp.current_user_following_artists([self.id])[0]
 
     def __repr__(self):
         info = self.info

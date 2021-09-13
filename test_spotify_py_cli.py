@@ -4,6 +4,7 @@ from typer.testing import CliRunner
 from app_strings import General, Create, Search, Unfollow, Follow
 from spotipy_facade import USE_DUMMY_WRAPPER
 from spotify_cli import spot, app
+from concrete import Playlist, Artist
 
 runner = CliRunner()
 
@@ -12,13 +13,14 @@ TEST_PL_NAME = "TEST_PL_NAME"
 
 class TestCreate:
     def test_create_playlist(self):
+        item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        pl_exists = spot.check_exists(pl_id)
+        following = spot.get_item(item_type, pl_id).following()
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
-        assert pl_exists
+        assert following
         assert result.exit_code == 0
         assert Create.plist_created in result.stdout
 
@@ -33,30 +35,32 @@ class TestCreate:
         assert Create.dupe_exist_no_f in result.stdout
 
     def test_create_name_clash_force(self):
+        item_type = "playlist"
         spot.create_playlist(TEST_PL_NAME)
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--force"])
 
         pl_ids = spot.get_pl_id(TEST_PL_NAME)
-        pl_exists = True
+        following = True
         for cur_id in pl_ids:
-            pl_exists = spot.check_exists(cur_id)
+            following = spot.get_item(item_type, cur_id).following()
 
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
-        assert pl_exists
+        assert following
         assert result.exit_code == 0
         assert Create.dupe_created in result.stdout
 
     def test_create_with_description(self):
         desc = "A test playlist"
+        item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        pl_exists = spot.check_exists(pl_id)
+        following = spot.get_item(item_type, pl_id).following()
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
-        assert pl_exists
+        assert following
         assert result.exit_code == 0
         assert Create.plist_created in result.stdout
         assert Create.desc_status.format(desc) in result.stdout
@@ -64,23 +68,26 @@ class TestCreate:
     def test_create_public(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        pl_exists = spot.check_exists(pl_id)
+        item_type = "playlist"
+        following = spot.get_item(item_type, pl_id).following()
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
-        assert pl_exists
+        assert following
         assert result.exit_code == 0
         assert Create.plist_created in result.stdout
         assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
+        item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        pl_exists = spot.check_exists(pl_id)
+        playlist: Playlist = spot.get_item(item_type, pl_id)
+        following = playlist.following()
         # Clean up
-        spot.unfollow_playlist(pl_id)
+        playlist.unfollow()
 
-        assert pl_exists
+        assert following
         assert result.exit_code == 0
         assert Create.plist_created in result.stdout
         assert Create.collab_status.format("True") in result.stdout
@@ -92,19 +99,20 @@ class TestFollow:
         test_name = "Massive Drum & Bass"
         pl_id = "37i9dQZF1DX5wDmLW735Yd"
 
-        was_following = spot.following_playlist(pl_id)
+        playlist: Playlist = spot.get_item(item_type, pl_id)
+        was_following = playlist.following()
         if was_following:
-            spot.unfollow_playlist(pl_id)
+            playlist.unfollow()
 
         if USE_DUMMY_WRAPPER:
             spot.sp.create_non_followed_playlist(test_name, pl_id)
         result = runner.invoke(app, ["follow", item_type, pl_id])
 
-        following = spot.following_playlist(pl_id)
+        following = playlist.following()
 
         # Cleanup
         if following and not was_following:
-            spot.unfollow_playlist(pl_id)
+            playlist.unfollow()
 
         assert following == True
         assert (
@@ -124,7 +132,7 @@ class TestFollow:
             spot.sp.create_non_followed_artist(artist_id, test_name)
         result = runner.invoke(app, ["follow", item_type, artist_id])
 
-        following = spot.sp.current_user_following_artists([artist_id])[0]
+        following = spot.get_item(item_type, artist_id).following()
 
         # Cleanup
         if following and not was_following:
@@ -172,12 +180,16 @@ class TestUnfollow:
         artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
         if USE_DUMMY_WRAPPER:
             spot.sp.create_non_followed_artist(artist_id, test_name)
-        spot.follow_artist(artist_id)
+        artist: Artist = spot.get_item(item_type, artist_id)
+        artist.follow()
         result = runner.invoke(
             app, ["unfollow", item_type, artist_id, "--no-prompt"]
         )
 
-        following = spot.sp.current_user_following_artists([artist_id])[0]
+        following = artist.following()
+
+        if following:
+            artist.unfollow()
 
         assert result.exit_code == 0
         assert not following
@@ -193,33 +205,35 @@ class TestUnfollow:
 
     def test_unfollow_pl_prompt_cancled(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
+        playlist: Playlist = spot.get_item("playlist", pl_id)
         result = runner.invoke(
             app, ["unfollow", "playlist", pl_id], input="n\n"
         )
 
         # Cleanup
-        spot.unfollow_playlist(pl_id)
+        playlist.unfollow()
         assert result.exit_code == 0
         assert General.op_canceled in result.stdout
 
     def test_unfollow_pl_prompt_approved(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
+        playlist: Playlist = spot.get_item("playlist", pl_id)
 
         result = runner.invoke(
             app, ["unfollow", "playlist", pl_id], input="y\n"
         )
-        pl_exists = spot.check_exists(pl_id)
+        following = playlist.following()
 
         # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
+        if following:
+            playlist.unfollow()
 
         assert result.exit_code == 0
         assert (
             Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
-        assert not pl_exists
+        assert not following
 
     # Redundant for now, since ID is the only thing supported
     # def test_unfollow_pl_by_id(self):
@@ -228,10 +242,11 @@ class TestUnfollow:
     #     result = runner.invoke(
     #         app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
     #     )
-    #     pl_exists = spot.check_exists(pl_id)
+    #     item_type = "playlist"
+    #     following = spot.get_item(item_type, pl_id).following()
 
     #     # Cleanup, if needed
-    #     if pl_exists:
+    #     if following:
     #         spot.unfollow_playlist(pl_id)
 
     #     assert result.exit_code == 0
@@ -239,26 +254,26 @@ class TestUnfollow:
     #         Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
     #         in result.stdout
     #     )
-    #     assert not pl_exists
+    #     assert not following
 
     def test_unfollow_pl_no_prompt(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-
+        playlist: Playlist = spot.get_item("playlist", pl_id)
         result = runner.invoke(
             app, ["unfollow", "playlist", "--no-prompt", pl_id]
         )
-        pl_exists = spot.check_exists(pl_id)
+        following = playlist.following()
 
         # Cleanup, if needed
-        if pl_exists:
-            spot.unfollow_playlist(pl_id)
+        if following:
+            playlist.unfollow()
 
         assert result.exit_code == 0
         assert (
             Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
-        assert not pl_exists
+        assert not following
 
     def test_unfollow_pl_DNE(self):
         item_type = "playlist"
@@ -300,10 +315,11 @@ class TestSearch:
 
     def test_search_name_provided_and_playlist_exists(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
+        playlist: Playlist = spot.get_item("playlist", pl_id)
         result = runner.invoke(app, ["search", "playlist", TEST_PL_NAME])
 
         # Clean up
-        spot.unfollow_playlist(pl_id)
+        playlist.unfollow()
 
         assert result.exit_code == 0
         assert Search.num_items_found.format(1, TEST_PL_NAME) in result.stdout
@@ -317,14 +333,16 @@ class TestSearch:
 
     def test_search_multiple_exist(self):
         pl_id1 = spot.create_playlist(TEST_PL_NAME)
+        play1: Playlist = spot.get_item("playlist", pl_id1)
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
+        play2: Playlist = spot.get_item("playlist", pl_id2)
         result = runner.invoke(
             app, ["search", "playlist", TEST_PL_NAME, "--user"]
         )
 
         # Clean up
-        spot.sp.current_user_unfollow_playlist(pl_id1)
-        spot.sp.current_user_unfollow_playlist(pl_id2)
+        play1.unfollow()
+        play2.unfollow()
 
         assert result.exit_code == 0
         assert Search.num_items_found.format(2, TEST_PL_NAME) in result.stdout

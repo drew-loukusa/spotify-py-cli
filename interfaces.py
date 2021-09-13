@@ -55,6 +55,11 @@ class IFollowable(metaclass=ABCMeta):
         """Unfollow a followable item"""
         raise NotImplementedError
 
+    @abstractmethod
+    def following(self):
+        """Check if current user is following item"""
+        raise NotImplementedError
+
     @abstractstaticmethod
     def get_followed_items(self):
         """Get all of a users followable items"""
@@ -66,6 +71,11 @@ class ISaveable(metaclass=ABCMeta):
     @abstractmethod
     def save(self):
         """Save a saveable item"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def saved(self):
+        """Checks if current user has item saved in library"""
         raise NotImplementedError
 
     @abstractmethod

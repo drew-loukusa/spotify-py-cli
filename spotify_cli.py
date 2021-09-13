@@ -145,7 +145,7 @@ def search(
         typer.echo(Search.list_all)
         spot.print_items(
             print_func=typer.echo,
-            items=spot.get_user_items(item_type),
+            items=spot.get_followed_items(item_type),
         )
     elif query == "":
         typer.Exit(code=1)

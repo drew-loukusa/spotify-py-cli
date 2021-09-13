@@ -44,6 +44,31 @@ class SpotipySpotifyFacade:
     def get_item(self, item_type, item_id):
         return self.types[item_type](self.sp, item_id)
 
+    def get_followed_items(self, item_type):
+        item_class = self.types[item_type]
+        return item_class.get_followed_items(self.sp)
+
+    def get_followed_item(
+        self, item_type: str, item_name: str = None, item_id: str = None
+    ) -> List[dict]:
+        item_class = self.types[item_type]
+        items = item_class.get_followed_items(self.sp)
+        selected_items = []
+        for item in items:
+            name, cur_id = item.name, item.id
+            if (
+                item_name is not None and name.strip() == item_name.strip()
+            ) or item_id == cur_id:
+                selected_items.append(item)
+
+        return None if len(selected_items) == 0 else selected_items
+
+    def get_unfollowed_item():
+        # This can be a seperate function, or you can make this an argument of 'get_followed_item' and rename it back to 'get_item'
+        # Getting an item for unfollowing means get the item from the user's followed itmes
+        # gettting an item for following means searching the publicly available items
+        pass
+
     def search_public(self, item_type, query, limit=10, offset=0, market=None):
         raw_items = self.sp.search(query, limit, offset, item_type, market)
         items = []
@@ -74,43 +99,6 @@ class SpotipySpotifyFacade:
         )
         return result["id"]
 
-    def follow_artist(self, artist_id):
-        """
-        Follows artist with ID 'artist_id'
-        Returns name of followed artist
-        """
-        self.sp.user_follow_artists([artist_id])
-        return self.sp.artist(artist_id)["name"]
-
-    def unfollow_artist(self, artist_id):
-        """
-        Unfollows artist with ID 'artist_id'
-        Returns name of followed artist
-        """
-        name = self.sp.artist(artist_id)["name"]
-        self.sp.user_unfollow_artists([artist_id])
-        return name
-
-    def get_user_items(self, item_type):
-        item_class = self.types[item_type]
-        return item_class.get_followed_items(self.sp)
-
-    def following_playlist(self, playlist_id):
-        return self.sp.playlist_is_following(playlist_id, [self.user_id])[0]
-
-    def follow_playlist(self, pl_id):
-        """
-        Follows playlist with id 'pl_id'
-        Returns name of playlist followed
-        """
-        self.sp.current_user_follow_playlist(playlist_id=pl_id)
-        name = self.get_playlist(pl_id=pl_id)[0]["name"]
-        return name
-
-    def unfollow_playlist(self, pl_id: str) -> None:
-        """Attempts to unfollow the playlist with the id 'pl_id'"""
-        self.sp.current_user_unfollow_playlist(playlist_id=pl_id)
-
     def unfollow_all_pl(self, pl_name: str) -> None:
         """Attempts to unfollow all playlists with the same name"""
         playlists = self.get_playlist(pl_name=pl_name)
@@ -138,27 +126,6 @@ class SpotipySpotifyFacade:
                 id_list.append(pl_list["id"])
             return id_list
         return None
-
-    def get_followed_item(
-        self, item_type: str, item_name: str = None, item_id: str = None
-    ) -> List[dict]:
-        item_class = self.types[item_type]
-        items = item_class.get_followed_items(self.sp)
-        selected_items = []
-        for item in items:
-            name, cur_id = item.name, item.id
-            if (
-                item_name is not None and name.strip() == item_name.strip()
-            ) or item_id == cur_id:
-                selected_items.append(item)
-
-        return None if len(selected_items) == 0 else selected_items
-
-    def get_unfollowed_item():
-        # This can be a seperate function, or you can make this an argument of 'get_followed_item' and rename it back to 'get_item'
-        # Getting an item for unfollowing means get the item from the user's followed itmes
-        # gettting an item for following means searching the publicly available items
-        pass
 
     def get_playlist(
         self, pl_name: str = None, pl_id: str = None

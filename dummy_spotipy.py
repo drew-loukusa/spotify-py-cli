@@ -2,6 +2,7 @@
 This module contains a dummy wrapper used for local testing. 
 The dummy wrapper emulates some behavior of the spotipy Spotify API wrapper.
 """
+from typing import List
 
 
 class DummySpotipy:
@@ -16,7 +17,7 @@ class DummySpotipy:
         self.non_followed_playlists = {"items": []}
         self.pl_dict = {}
 
-    def current_user_following_artists(self, ids):
+    def current_user_following_artists(self, ids: List[str]):
         bools = []
         for item_id in ids:
             for artist in self.artists["artists"]["items"]:
