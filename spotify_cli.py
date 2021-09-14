@@ -1,4 +1,5 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
+
 from interfaces import Item, ItemCollection
 import sys
 import typer

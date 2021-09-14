@@ -7,9 +7,12 @@ class Playlist(Item):  # , ItemCollection
     def __init__(self, sp: Spotify, item_id: str, info=None):
         info = Item._get_item(sp.playlist, item_id) if info is None else info
         name = None if info is None else info["name"]
-        super().__init__(sp, item_id, info, name)
+        super().__init__(sp, item_id, info, name, item_type="Playlist")
 
     def __repr__(self):
+        return f"[{self.type}: {self.name}, {self.id}]"
+
+    def __str__(self):
         info = self.info
         pl_str = ["-----------------------"]
         pl_str += [f"Name:\t\t{info['name']}"]
@@ -44,7 +47,8 @@ class FollowedPlaylists(ItemCollection):
     def contains(self, item: Playlist):
         return self.sp.playlist_is_following(item.id, [self.sp.me()["id"]])[0]
 
-    def get_items(self):
+    @property
+    def items(self):
         playlists = []
         res = self.sp.current_user_playlists()
         if res is None:
@@ -58,9 +62,12 @@ class Artist(Item):
     def __init__(self, sp: Spotify, item_id: str, info=None):
         info = sp.artist(item_id) if info is None else info
         name = None if info is None else info["name"]
-        super().__init__(sp, item_id, info, name)
+        super().__init__(sp, item_id, info, name, item_type="Artist")
 
     def __repr__(self):
+        return f"[{self.type}: {self.name}, {self.id}]"
+
+    def __str__(self):
         info = self.info
         art_str = ["-----------------------"]
         art_str += [f"Name:\t\t{info['name']}"]
@@ -92,7 +99,8 @@ class FollowedArtists(ItemCollection):
     def contains(self, item: Artist):
         return self.sp.current_user_following_artists([item.id])[0]
 
-    def get_items(self):
+    @property
+    def items(self):
         artists = []
         res = self.sp.current_user_followed_artists()
         if res is None:

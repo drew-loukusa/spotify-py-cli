@@ -50,21 +50,20 @@ class SpotipySpotifyFacade:
     def get_collection(self, item_type):
         i_type = self.types[item_type]
         if "collection" in i_type:
-            return i_type["collection"]
+            return i_type["collection"](self.sp)
         else:
             return None
 
     def get_followed_items(self, item_type):
         item_class = self.types[item_type]["collection"](self.sp)
-        return item_class.get_items()
+        return item_class.items
 
     def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
-        item_class = self.types[item_type](self.sp)
-        items = item_class.get_items()
+        item_class = self.types[item_type]["collection"](self.sp)
         selected_items = []
-        for item in items:
+        for item in item_class.items:
             name, cur_id = item.name, item.id
             if (
                 item_name is not None and name.strip() == item_name.strip()
@@ -81,12 +80,13 @@ class SpotipySpotifyFacade:
 
     def search_public(self, item_type, query, limit=10, offset=0, market=None):
         raw_items = self.sp.search(query, limit, offset, item_type, market)
+        init_item = self.types[item_type]["item"]
         items = []
         for raw_item in raw_items[item_type + "s"]["items"]:
             if raw_item is None:
                 continue
             item_id = raw_item["id"]
-            items.append(self.types[item_type](self.sp, item_id, info=raw_item))
+            items.append(init_item(self.sp, item_id, info=raw_item))
         return items
 
     def create_playlist(
