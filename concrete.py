@@ -1,22 +1,13 @@
 import textwrap
 from spotipy import Spotify
-from interfaces import Item, IFollowable
+from interfaces import Item, ItemCollection
 
 
-class Playlist(Item, IFollowable):
+class Playlist(Item):  # , ItemCollection
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        info = Playlist.get_item(sp, item_id) if info is None else info
+        info = Item._get_item(sp.playlist, item_id) if info is None else info
         name = None if info is None else info["name"]
-        super().__init__(item_id, sp, info, name)
-
-    def follow(self):
-        self.sp.current_user_follow_playlist(playlist_id=self.id)
-
-    def unfollow(self):
-        self.sp.current_user_unfollow_playlist(playlist_id=self.id)
-
-    def following(self):
-        return self.sp.playlist_is_following(self.id, [self.sp.me()["id"]])[0]
+        super().__init__(sp, item_id, info, name)
 
     def __repr__(self):
         info = self.info
@@ -39,35 +30,35 @@ class Playlist(Item, IFollowable):
 
         return "\n".join(pl_str)
 
-    @staticmethod
-    def get_item(sp: Spotify, item_id: str):
-        return Item._get_item(sp.playlist, item_id)
 
-    @staticmethod
-    def get_followed_items(sp: Spotify):
+class FollowedPlaylists(ItemCollection):
+    def __init__(self, sp: Spotify):
+        super().__init__(sp)
+
+    def add(self, item: Playlist):
+        self.sp.current_user_follow_playlist(playlist_id=item.id)
+
+    def remove(self, item: Playlist):
+        self.sp.current_user_unfollow_playlist(playlist_id=item.id)
+
+    def contains(self, item: Playlist):
+        return self.sp.playlist_is_following(item.id, [self.sp.me()["id"]])[0]
+
+    def get_items(self):
         playlists = []
-        res = sp.current_user_playlists()
+        res = self.sp.current_user_playlists()
         if res is None:
             return None
         for playlist in res["items"]:
-            playlists.append(Playlist(sp, playlist["id"], info=playlist))
+            playlists.append(Playlist(self.sp, playlist["id"], info=playlist))
         return playlists
 
 
-class Artist(Item, IFollowable):
+class Artist(Item):
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        info = Artist.get_item(sp, item_id) if info is None else info
+        info = sp.artist(item_id) if info is None else info
         name = None if info is None else info["name"]
-        super().__init__(item_id, sp, info, name)
-
-    def follow(self):
-        self.sp.user_follow_artists([self.id])
-
-    def unfollow(self):
-        self.sp.user_unfollow_artists([self.id])
-
-    def following(self):
-        return self.sp.current_user_following_artists([self.id])[0]
+        super().__init__(sp, item_id, info, name)
 
     def __repr__(self):
         info = self.info
@@ -87,16 +78,25 @@ class Artist(Item, IFollowable):
 
         return "\n".join(art_str)
 
-    @staticmethod
-    def get_item(sp: Spotify, item_id: str):
-        return Item._get_item(sp.artist, item_id)
 
-    @staticmethod
-    def get_followed_items(sp: Spotify):
+class FollowedArtists(ItemCollection):
+    def __init__(self, sp: Spotify):
+        super().__init__(sp)
+
+    def add(self, item: Artist):
+        self.sp.user_follow_artists([item.id])
+
+    def remove(self, item: Artist):
+        self.sp.user_unfollow_artists([item.id])
+
+    def contains(self, item: Artist):
+        return self.sp.current_user_following_artists([item.id])[0]
+
+    def get_items(self):
         artists = []
-        res = sp.current_user_followed_artists()
+        res = self.sp.current_user_followed_artists()
         if res is None:
             return None
 
         for artist in res["artists"]["items"]:
-            artists.append(Artist(sp, artist["id"], artist))
+            artists.append(Artist(self.sp, artist["id"], artist))

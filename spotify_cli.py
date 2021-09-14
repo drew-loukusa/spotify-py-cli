@@ -1,6 +1,5 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
-from concrete import Playlist
-from interfaces import IFollowable, Item
+from interfaces import Item, ItemCollection
 import sys
 import typer
 from spotipy_facade import SpotipySpotifyFacade
@@ -62,9 +61,10 @@ def follow(
 ):
     """Follow a followable item (playlist or artist)"""
     item: Item = spot.get_item(item_type, item_id)
+    collection: ItemCollection = spot.get_collection(item_type)
 
     # Check that item is followable
-    if not hasattr(item, "follow"):
+    if collection is None:
         typer.echo(f"Item of type '{item_type}' cannot be followed!")
         sys.exit(1)
 
@@ -73,7 +73,8 @@ def follow(
         typer.echo(General.item_DNE.format(item_type, "id", item_id))
         sys.exit(1)
 
-    item.follow()
+    # Follow the item
+    collection.add(item)
 
     typer.echo(Follow.followed.format(item_type, item.name, item_id))
     sys.exit(0)
@@ -97,8 +98,9 @@ def unfollow(
     """
     # Retrieve item matching item_id
     item: Item = spot.get_item(item_type, item_id)
+    collection: ItemCollection = spot.get_collection(item_type)
 
-    if not hasattr(item, "unfollow"):
+    if collection is None:
         typer.echo(f"Item of type '{item_type}' cannot be unfollowed!")
         sys.exit(1)
 
@@ -117,7 +119,7 @@ def unfollow(
         confirm_Unfollow = True
 
     if confirm_Unfollow:
-        item.unfollow()
+        collection.remove(item)
         typer.echo(Unfollow.unfollowed_item.format(item.name, item_id))
         sys.exit(0)
 

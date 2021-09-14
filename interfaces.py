@@ -1,20 +1,20 @@
 """
 This module contains interfaces and an abstract base class.
 """
-from abc import ABCMeta, abstractmethod, abstractstaticmethod
+from abc import ABCMeta, abstractmethod
 
 from spotipy import Spotify, SpotifyException
+import spotipy
 
 # Abstract base class
 class Item(metaclass=ABCMeta):
     """
-    Item should be inherited by all items (Playlist, Artist, Album, Track, Episode, Show, etc),
-    and the items implement different interfaces as needed
+    Item should be inherited by all items (Playlist, Artist, Album, Track, Episode, Show, etc)
     """
 
-    def __init__(self, item_id: str, sp: Spotify, info: dict, name: str):
-        self.id = item_id
+    def __init__(self, sp: Spotify, item_id: str, info: dict, name: str):
         self.sp = sp
+        self.id = item_id
         self.info = info
         self.name = name
         self.msg = ""
@@ -24,14 +24,7 @@ class Item(metaclass=ABCMeta):
         """Make item printable"""
         raise NotImplementedError
 
-    @abstractstaticmethod
-    def get_item(sp: Spotify, item_id: str):
-        """Retreive an item from spotify, return item info or None"""
-        raise NotImplementedError
-
-    # Concrete classes invoke this when defining an implementation of
-    # 'get_item' and pass in their specific method for getting their
-    # item info from the Spotify instance
+    # Concrete classes should invoke this in their init methods
     @staticmethod
     def _get_item(concrete_getter, item_id):
         try:
@@ -44,41 +37,26 @@ class Item(metaclass=ABCMeta):
 
 
 # Interface
-class IFollowable(metaclass=ABCMeta):
+class ItemCollection(metaclass=ABCMeta):
+    def __init__(self, sp: Spotify):
+        self.sp = sp
+
     @abstractmethod
-    def follow(self):
-        """Follow a followable item"""
+    def add(self, item: Item):
+        """Add an item to the collection"""
         raise NotImplementedError
 
     @abstractmethod
-    def unfollow(self):
-        """Unfollow a followable item"""
+    def remove(self, item: Item):
+        """Remove an item from the collection"""
         raise NotImplementedError
 
     @abstractmethod
-    def following(self):
-        """Check if current user is following item"""
-        raise NotImplementedError
-
-    @abstractstaticmethod
-    def get_followed_items(self):
-        """Get all of a users followable items"""
-        raise NotImplementedError
-
-
-# Interface
-class ISaveable(metaclass=ABCMeta):
-    @abstractmethod
-    def save(self):
-        """Save a saveable item"""
+    def contains(self, item: Item):
+        """Check if item is a member of the collection"""
         raise NotImplementedError
 
     @abstractmethod
-    def saved(self):
-        """Checks if current user has item saved in library"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def unsave(self):
-        """Unsave a saveable item"""
+    def get_items(self):
+        """Get a list of the items in the collection"""
         raise NotImplementedError

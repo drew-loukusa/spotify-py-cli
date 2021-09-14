@@ -3,7 +3,7 @@ from typing import List
 import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
-from concrete import Playlist, Artist
+from concrete import Artist, FollowedArtists, Playlist, FollowedPlaylists
 from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
@@ -39,20 +39,30 @@ class SpotipySpotifyFacade:
             )
         )
         self.user_id = self.sp.me()["id"]
-        self.types = {"playlist": Playlist, "artist": Artist}
+        self.types = {
+            "playlist": {"item": Playlist, "collection": FollowedPlaylists},
+            "artist": {"item": Artist, "collection": FollowedArtists},
+        }
 
     def get_item(self, item_type, item_id):
-        return self.types[item_type](self.sp, item_id)
+        return self.types[item_type]["item"](self.sp, item_id)
+
+    def get_collection(self, item_type):
+        i_type = self.types[item_type]
+        if "collection" in i_type:
+            return i_type["collection"]
+        else:
+            return None
 
     def get_followed_items(self, item_type):
-        item_class = self.types[item_type]
-        return item_class.get_followed_items(self.sp)
+        item_class = self.types[item_type]["collection"](self.sp)
+        return item_class.get_items()
 
     def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
-        item_class = self.types[item_type]
-        items = item_class.get_followed_items(self.sp)
+        item_class = self.types[item_type](self.sp)
+        items = item_class.get_items()
         selected_items = []
         for item in items:
             name, cur_id = item.name, item.id

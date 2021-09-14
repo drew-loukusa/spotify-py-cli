@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from app_strings import General, Create, Search, Unfollow, Follow
 from spotipy_facade import USE_DUMMY_WRAPPER
 from spotify_cli import spot, app
-from concrete import Playlist, Artist
+from concrete import Playlist, FollowedPlaylists, Artist, FollowedArtists
 
 runner = CliRunner()
 
@@ -16,10 +16,11 @@ class TestCreate:
         item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        playlist: Playlist = spot.get_item(item_type, pl_id)
-        following = playlist.following()
+        playlist = Playlist(spot.sp, pl_id)
+        fp = FollowedPlaylists(spot.sp)
+        following = fp.contains(playlist)
         # Clean up
-        playlist.unfollow()
+        fp.remove(playlist)
 
         assert following
         assert result.exit_code == 0
@@ -27,11 +28,11 @@ class TestCreate:
 
     def test_create_name_clash_no_force(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist: Playlist = spot.get_item("playlist", pl_id)
+        fp = FollowedPlaylists(spot.sp)
         result = runner.invoke(app, ["create", TEST_PL_NAME])
 
         # Clean up
-        playlist.unfollow()
+        fp.remove(Playlist(spot.sp, pl_id))
 
         assert result.exit_code == 0
         assert Create.dupe_exist_no_f in result.stdout
@@ -44,7 +45,9 @@ class TestCreate:
         pl_ids = spot.get_pl_id(TEST_PL_NAME)
         following = True
         for cur_id in pl_ids:
-            following = spot.get_item(item_type, cur_id).following()
+            following = FollowedPlaylists(spot.sp).contains(
+                Playlist(spot.sp, cur_id)
+            )
 
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
@@ -55,10 +58,11 @@ class TestCreate:
 
     def test_create_with_description(self):
         desc = "A test playlist"
-        item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        following = spot.get_item(item_type, pl_id).following()
+        following = FollowedPlaylists(spot.sp).contains(
+            Playlist(spot.sp, pl_id)
+        )
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
@@ -70,8 +74,9 @@ class TestCreate:
     def test_create_public(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        item_type = "playlist"
-        following = spot.get_item(item_type, pl_id).following()
+        following = FollowedPlaylists(spot.sp).contains(
+            Playlist(spot.sp, pl_id)
+        )
         # Clean up
         spot.unfollow_all_pl(TEST_PL_NAME)
 
@@ -81,13 +86,13 @@ class TestCreate:
         assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
-        item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        playlist: Playlist = spot.get_item(item_type, pl_id)
-        following = playlist.following()
+        playlist = Playlist(spot.sp, pl_id)
+        fp = FollowedPlaylists(spot.sp)
+        following = fp.contains(playlist)
         # Clean up
-        playlist.unfollow()
+        fp.remove(playlist)
 
         assert following
         assert result.exit_code == 0
@@ -101,8 +106,9 @@ class TestFollow:
         test_name = "Massive Drum & Bass"
         pl_id = "37i9dQZF1DX5wDmLW735Yd"
 
-        playlist: Playlist = spot.get_item(item_type, pl_id)
-        was_following = playlist.following()
+        fp = FollowedPlaylists(spot.sp)
+        playlist = Playlist(spot.sp, pl_id)
+        was_following = fp.contains(playlist)
         if was_following:
             playlist.unfollow()
 
@@ -207,7 +213,7 @@ class TestUnfollow:
 
     def test_unfollow_pl_prompt_cancled(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist: Playlist = spot.get_item("playlist", pl_id)
+        playlist: FollowedPlaylists = spot.get_item("playlist", pl_id)
         result = runner.invoke(
             app, ["unfollow", "playlist", pl_id], input="n\n"
         )
@@ -219,7 +225,7 @@ class TestUnfollow:
 
     def test_unfollow_pl_prompt_approved(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist: Playlist = spot.get_item("playlist", pl_id)
+        playlist: FollowedPlaylists = spot.get_item("playlist", pl_id)
 
         result = runner.invoke(
             app, ["unfollow", "playlist", pl_id], input="y\n"
@@ -260,7 +266,7 @@ class TestUnfollow:
 
     def test_unfollow_pl_no_prompt(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist: Playlist = spot.get_item("playlist", pl_id)
+        playlist: FollowedPlaylists = spot.get_item("playlist", pl_id)
         result = runner.invoke(
             app, ["unfollow", "playlist", "--no-prompt", pl_id]
         )
@@ -317,7 +323,7 @@ class TestSearch:
 
     def test_search_name_provided_and_playlist_exists(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist: Playlist = spot.get_item("playlist", pl_id)
+        playlist: FollowedPlaylists = spot.get_item("playlist", pl_id)
         result = runner.invoke(app, ["search", "playlist", TEST_PL_NAME])
 
         # Clean up
@@ -335,9 +341,9 @@ class TestSearch:
 
     def test_search_multiple_exist(self):
         pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        play1: Playlist = spot.get_item("playlist", pl_id1)
+        play1: FollowedPlaylists = spot.get_item("playlist", pl_id1)
         pl_id2 = spot.create_playlist(TEST_PL_NAME)
-        play2: Playlist = spot.get_item("playlist", pl_id2)
+        play2: FollowedPlaylists = spot.get_item("playlist", pl_id2)
         result = runner.invoke(
             app, ["search", "playlist", TEST_PL_NAME, "--user"]
         )
