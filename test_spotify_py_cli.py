@@ -16,20 +16,22 @@ class TestCreate:
         item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME])
         pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
-        following = spot.get_item(item_type, pl_id).following()
+        playlist: Playlist = spot.get_item(item_type, pl_id)
+        following = playlist.following()
         # Clean up
-        spot.unfollow_all_pl(TEST_PL_NAME)
+        playlist.unfollow()
 
         assert following
         assert result.exit_code == 0
         assert Create.plist_created in result.stdout
 
     def test_create_name_clash_no_force(self):
-        spot.create_playlist(TEST_PL_NAME)
+        pl_id = spot.create_playlist(TEST_PL_NAME)
+        playlist: Playlist = spot.get_item("playlist", pl_id)
         result = runner.invoke(app, ["create", TEST_PL_NAME])
 
         # Clean up
-        spot.unfollow_all_pl(TEST_PL_NAME)
+        playlist.unfollow()
 
         assert result.exit_code == 0
         assert Create.dupe_exist_no_f in result.stdout

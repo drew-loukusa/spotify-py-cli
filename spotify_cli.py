@@ -96,7 +96,7 @@ def unfollow(
     This "deletes" playlists you've created.
     """
     # Retrieve item matching item_id
-    item = spot.get_item(item_type, item_id)
+    item: Item = spot.get_item(item_type, item_id)
 
     if not hasattr(item, "unfollow"):
         typer.echo(f"Item of type '{item_type}' cannot be unfollowed!")
