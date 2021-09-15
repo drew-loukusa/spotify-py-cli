@@ -1,9 +1,12 @@
 """This module contains a facade class built on top of spotipy Spotify wrapper"""
 from typing import List
+
 import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
-from concrete import Artist, FollowedArtists, Playlist, FollowedPlaylists
+
+from items import Artist, Playlist
+from user_libary import FollowedArtists, FollowedPlaylists
 from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)

@@ -13,12 +13,25 @@ class Item(metaclass=ABCMeta):
     """
 
     def __init__(
-        self, sp: Spotify, item_id: str, info: dict, name: str, item_type: str
+        self,
+        sp: Spotify,
+        concrete_getter,
+        item_id: str,
+        item_type: str,
+        info: dict,
     ):
+
         self.sp = sp
         self.id = item_id
         self.info = info
-        self.name = name
+
+        if info is None:
+            self.info = self._get_item(concrete_getter, item_id)
+
+        self.name = None
+        if self.info is not None:
+            self.name = self.info["name"]
+
         self.type = item_type
         self.msg = ""
 
@@ -27,7 +40,6 @@ class Item(metaclass=ABCMeta):
         """Make item printable"""
         raise NotImplementedError
 
-    # Concrete classes should invoke this in their init methods
     @staticmethod
     def _get_item(concrete_getter, item_id):
         try:
@@ -42,7 +54,8 @@ class Item(metaclass=ABCMeta):
 # Interface
 class ItemCollection(metaclass=ABCMeta):
     """
-    TODO: Add doc string
+    A class should implement this interface if it can "hold" a collection of items.
+    A class can be an Item, and an ItemCollection, example: Playlist or Album
     """
 
     @property
@@ -60,7 +73,8 @@ class ItemCollection(metaclass=ABCMeta):
 # Interface
 class Mutable:
     """
-    TODO: Add doc string
+    If an ItemCollection is mutable (modifiable, editable) by the user,
+    said ItemCollection should implement this interface.
     """
 
     @abstractmethod

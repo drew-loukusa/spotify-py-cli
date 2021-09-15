@@ -1,8 +1,9 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
-from interfaces import Item, ItemCollection
 import sys
+
 import typer
+from interfaces import Item, ItemCollection
 from spotipy_facade import SpotipySpotifyFacade
 from app_strings import General, Create, Search, Follow, Unfollow
 

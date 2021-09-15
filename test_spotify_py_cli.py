@@ -1,10 +1,13 @@
 import re
 
-from typer.testing import CliRunner
-from app_strings import General, Create, Search, Unfollow, Follow
 from spotipy_facade import USE_DUMMY_WRAPPER
+
+from typer.testing import CliRunner
 from spotify_cli import spot, app
-from concrete import Playlist, FollowedPlaylists, Artist, FollowedArtists
+
+from items import Playlist, Artist
+from user_libary import FollowedPlaylists, FollowedArtists
+from app_strings import General, Create, Search, Unfollow, Follow
 
 runner = CliRunner()
 
@@ -401,17 +404,3 @@ class TestSearch:
         pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
-
-
-# Dumb hack for debugging test cases:
-if __name__ == "__main__":
-    # Run test case directly here
-
-    # TestFollow().test_follow_pl_by_id()
-    # TestFollow().test_follow_artist_by_id()
-    # TestUnfollow().test_unfollow_artist_by_name()
-    # TestUnfollow().test_unfollow_artist_by_name()
-    TestUnfollow().test_unfollow_artist_by_id()
-    # TestSearch().test_search_multiple_exist()
-    # TestSearch().test_search_name_provided_and_playlist_exists()
-    pass
