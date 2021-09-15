@@ -18,11 +18,6 @@ SCOPE = "playlist-modify-private \
 # If testing locally, use the dummy wrapper
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
-# Playlist and Artist currently implement followable.
-# More possible interfaces... Editable, Searchable
-# If I want to add more interfaces, I should formally define each one using the ABC module, so that
-# I can denote with multiple inheritance which interfaces each item implements
-
 
 class SpotipySpotifyFacade:
     """

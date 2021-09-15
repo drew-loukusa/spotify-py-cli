@@ -1,10 +1,10 @@
 """
 This module contains interfaces and an abstract base class.
 """
-from abc import ABCMeta, abstractmethod, abstractproperty
+from typing import List
+from abc import ABCMeta, abstractmethod
 
 from spotipy import Spotify, SpotifyException
-import spotipy
 
 # Abstract base class
 class Item(metaclass=ABCMeta):
@@ -41,14 +41,27 @@ class Item(metaclass=ABCMeta):
 
 # Interface
 class ItemCollection(metaclass=ABCMeta):
-    def __init__(self, sp: Spotify):
-        self.sp = sp
+    """
+    TODO: Add doc string
+    """
 
     @property
     @abstractmethod
-    def items(self):
+    def items(self) -> List[Item]:
         """Get a list of the items in the collection"""
         raise NotImplementedError
+
+    @abstractmethod
+    def contains(self, item: Item):
+        """Check if item is a member of the collection"""
+        raise NotImplementedError
+
+
+# Interface
+class Mutable:
+    """
+    TODO: Add doc string
+    """
 
     @abstractmethod
     def add(self, item: Item):
@@ -58,9 +71,4 @@ class ItemCollection(metaclass=ABCMeta):
     @abstractmethod
     def remove(self, item: Item):
         """Remove an item from the collection"""
-        raise NotImplementedError
-
-    @abstractmethod
-    def contains(self, item: Item):
-        """Check if item is a member of the collection"""
         raise NotImplementedError
