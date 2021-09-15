@@ -299,7 +299,7 @@ class Album(Item, ItemCollection):
         # So you'll have to do this one by hand
 
 
-class FollowedAlbums(ItemCollection, Mutable):
+class SavedAlbums(ItemCollection, Mutable):
     """
     TODO: Add doc string
     """
