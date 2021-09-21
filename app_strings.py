@@ -1,5 +1,9 @@
 class General:
-    spec_name_id = "You must specify NAME or ID"
+    # def num_found(self, num_items: int, item_name: str):
+    #     """{num_items} {item_type}(s) found matching name {item_name}"""
+    #     return self.num_found.__doc__.format(
+    #         num_items=num_items, item_type=self.type, item_name=item_name
+    #     )
     num_items_found = "{} item(s) found matching name {}"
     item_DNE = "{} with {}: '{}' appears to not exist!"
     op_canceled = "Operation cancelled"

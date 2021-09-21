@@ -16,7 +16,9 @@ class Episode(Item):
     """
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        super().__init__(sp, sp.episode, item_id=item_id, item_type="episode", info=info)
+        super().__init__(
+            sp, sp.episode, item_id=item_id, item_type="episode", info=info
+        )
 
     def __repr__(self) -> str:
         return f"<Episode: name: {self.name}, id: {self.id}>"
@@ -32,7 +34,7 @@ class Track(Item):
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
         if info is None:
-            info = Item._get_item(sp.episode, item_id) 
+            info = Item._get_item(sp.episode, item_id)
         name = info["name"]
         super().__init__(item_id, sp, info, name, item_type="track")
 
@@ -41,7 +43,7 @@ class Track(Item):
 
     def __str__(self) -> str:
         return f"<Track: name: {self.name}, id: {self.id}>"
-        
+
 
 class Show(Item, ItemCollection):
     """
@@ -49,7 +51,9 @@ class Show(Item, ItemCollection):
     """
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        super().__init__(sp, sp.show, item_id=item_id, item_type="show", info=info)
+        super().__init__(
+            sp, sp.show, item_id=item_id, item_type="show", info=info
+        )
 
     def __repr__(self) -> str:
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
@@ -59,13 +63,20 @@ class Show(Item, ItemCollection):
 
     @property
     def items(self):
-        raise NotImplementedError
-        # self.sp.show_episodes(self.id, limit=50)
+        raw_episodes = self._items(self.sp.show_episodes)
+        if raw_episodes is None:
+            return None
+        episodes = []
+        for episode in raw_episodes:
+            ep = episode["episode"]
+            episodes.append(Episode(self.sp, ep["id"], ep))
+        return episodes
 
     def contains(self, item: Item):
-        raise NotImplementedError
-        # There isn't a 'show_contains_episode' method,
-        # so I will probably have to do it by hand
+        for ep in self.items:
+            if item.id == ep.id:
+                return True
+        return False
 
 
 class Playlist(Item, ItemCollection, Mutable):
@@ -74,7 +85,9 @@ class Playlist(Item, ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        super().__init__(sp, sp.playlist, item_id=item_id, item_type="playlist", info=info)
+        super().__init__(
+            sp, sp.playlist, item_id=item_id, item_type="playlist", info=info
+        )
 
     def __repr__(self):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
@@ -103,8 +116,23 @@ class Playlist(Item, ItemCollection, Mutable):
     # Playlist implements ItemCollection since it "holds" a collection of tracks
     @property
     def items(self):
-        raise NotImplementedError
-        self.sp.playlist_tracks(self.id)
+        raw_tracks = self._items(self.sp.playlist_tracks, playlist_id=self.id)
+        if raw_tracks is None:
+            return None
+
+        tracks = []
+        for track in raw_tracks:
+            # TODO: Playlists can have episodes in them, add support for that
+            tr = track["track"]
+            tracks.append(Track(self.sp, tr["id"], tr))
+        return tracks
+
+    def contains(self, item: Item):
+        for track in self.items:
+            if track.id == item.id:
+                return True
+        else:
+            return False
 
     def add(self, item: Item):
         "item can be track or episode"
@@ -112,9 +140,6 @@ class Playlist(Item, ItemCollection, Mutable):
 
     def remove(self, item: Item):
         self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
-
-    def contains(self, item: Item):
-        self.sp.current_user
 
 
 class Artist(Item):
@@ -153,7 +178,9 @@ class Album(Item, ItemCollection):
     """
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        super().__init__(sp, sp.album, item_id=item_id, item_type="album", info=info)
+        super().__init__(
+            sp, sp.album, item_id=item_id, item_type="album", info=info
+        )
 
     def __repr__(self) -> str:
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
@@ -163,10 +190,18 @@ class Album(Item, ItemCollection):
 
     @property
     def items(self) -> List[Item]:
-        raise NotImplementedError
-        self.sp.album_tracks(self.id, limit=None)
+        raw_tracks = self._get_item(self.sp.album_tracks, self.id)
+        if raw_tracks is None:
+            return None
+        tracks = []
+        for track in raw_tracks:
+            tr = track["track"]
+            tracks.append(Track(self.sp, tr["id"], tr))
+        return tracks
 
     def contains(self, item: Item):
-        raise NotImplementedError
-        # Same as Show, album does not have a "album_contains_item" method
-        # So you'll have to do this one by hand
+        for track in self.items:
+            if track.id == item.id:
+                return True
+        else:
+            return False

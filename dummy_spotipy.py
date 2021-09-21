@@ -118,8 +118,10 @@ class DummySpotipy:
     def user_playlists(self, user):
         return self.playlists
 
-    def current_user_playlists(self):
-        return self.playlists
+    def current_user_playlists(self, limit=20, offset=0):
+        stuff = {"next": None}
+        stuff.update(self.playlists)
+        return stuff
 
     def current_user_follow_playlist(self, playlist_id):
         playlist = None

@@ -9,6 +9,7 @@ from spotipy import Spotify
 from interfaces import Item, ItemCollection, Mutable
 from items import Episode, Track, Artist, Album, Playlist, Show
 
+
 class SavedEpisodes(ItemCollection, Mutable):
     """
     Class for managing the current user's saved episodes
@@ -19,8 +20,15 @@ class SavedEpisodes(ItemCollection, Mutable):
 
     @property
     def items(self):
-        raise NotImplementedError
-        self.sp.current_user_saved_episodes()
+        raw_episodes = self._items(self.sp.current_user_saved_episodes)
+        if raw_episodes is None:
+            return None
+
+        episodes = []
+        for episode in raw_episodes:
+            ep = episode["episode"]
+            episodes.append(Episode(self.sp, ep["id"], ep))
+        return episodes
 
     def add(self, item: Episode):
         self.sp.current_user_saved_episodes_add(episodes=[item.id])
@@ -42,7 +50,15 @@ class SavedTracks(ItemCollection, Mutable):
 
     @property
     def items(self):
-        raise NotImplementedError
+        raw_tracks = self._items(self.sp.current_user_saved_tracks)
+        if raw_tracks is None:
+            return None
+
+        tracks = []
+        for track in tracks:
+            track = track["track"]
+            tracks.append(Track(self.sp, track["id"], track))
+        return tracks
 
     def add(self, item: Track):
         self.sp.current_user_saved_tracks_add(tracks=[item.id])
@@ -64,8 +80,15 @@ class SavedShows(ItemCollection, Mutable):
 
     @property
     def items(self):
-        raise NotImplementedError
-        self.sp.current_user_saved_shows()
+        raw_shows = self._items(self.sp.current_user_saved_shows)
+        if raw_shows is None:
+            return None
+
+        shows = []
+        for show in raw_shows["items"]:
+            show = show["show"]
+            shows.append(Show(self.sp, show["id"], show))
+        return shows
 
     def contains(self, item: Show):
         return self.sp.current_user_saved_shows_contains(shows=[item.id])
@@ -87,13 +110,15 @@ class SavedAlbums(ItemCollection, Mutable):
 
     @property
     def items(self):
-        albums = []
-        res = self.sp.current_user_saved_albums()
-        if res is None:
+        raw_albums = self._items(self.sp.current_user_saved_albums())
+        if raw_albums is None:
             return None
 
-        for album in res["albums"]["items"]:
+        albums = []
+        for album in raw_albums["items"]:
+            album = album["album"]
             albums.append(Album(self.sp, album["id"], album))
+        return albums
 
     def add(self, item: Album):
         self.sp.current_user_saved_albums_add(albums=[item.id])
@@ -115,11 +140,12 @@ class FollowedPlaylists(ItemCollection, Mutable):
 
     @property
     def items(self):
-        playlists = []
-        res = self.sp.current_user_playlists()
-        if res is None:
+        raw_playlists = self._items(self.sp.current_user_playlists)
+        if raw_playlists is None:
             return None
-        for playlist in res["items"]:
+
+        playlists = []
+        for playlist in raw_playlists:
             playlists.append(Playlist(self.sp, playlist["id"], info=playlist))
         return playlists
 
@@ -143,13 +169,22 @@ class FollowedArtists(ItemCollection, Mutable):
 
     @property
     def items(self):
-        artists = []
-        res = self.sp.current_user_followed_artists()
-        if res is None:
+        # Wrap 'current_user_followed_artists' because the return format is different
+        # from all other current user followed/saved get functions, for some reason.
+        def wrapped_cur_followed_artists(*args, **kwargs):
+            res = self.sp.current_user_followed_artists(*args, **kwargs)
+            if res is None:
+                return None
+            return res["artists"]
+
+        raw_artists = self._items(wrapped_cur_followed_artists)
+        if raw_artists is None:
             return None
 
-        for artist in res["artists"]["items"]:
+        artists = []
+        for artist in raw_artists:
             artists.append(Artist(self.sp, artist["id"], artist))
+        return artists
 
     def add(self, item: Artist):
         self.sp.user_follow_artists([item.id])

@@ -58,6 +58,23 @@ class ItemCollection(metaclass=ABCMeta):
     A class can be an Item, and an ItemCollection, example: Playlist or Album
     """
 
+    def _items(self, concrete_items, *args, **kwargs):
+        raw_items = []
+        more = True
+        offset = 0
+        while more:
+            kwargs.update({"limit": 20, "offset": offset})
+
+            res = concrete_items(*args, **kwargs)
+            if res is None:
+                return None
+            raw_items.extend(res["items"])
+            if res["next"] != None:
+                offset += 20
+            else:
+                more = False
+        return raw_items
+
     @property
     @abstractmethod
     def items(self) -> List[Item]:
