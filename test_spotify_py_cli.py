@@ -340,7 +340,12 @@ class TestSearch:
         fp.remove(playlist)
 
         assert result.exit_code == 0
-        assert Search.num_items_found.format(1, TEST_PL_NAME) in result.stdout
+        assert (
+            Search.num_items_found.format("", TEST_PL_NAME).replace(
+                "Found ", ""
+            )
+            in result.stdout
+        )
 
     def test_search_name_provided_and_playlist_DNE(self):
         result = runner.invoke(
