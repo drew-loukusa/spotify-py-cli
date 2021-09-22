@@ -19,7 +19,7 @@ def callback():
     """
 
 
-@app.command()
+@app.command(no_args_is_help=True)
 def create(
     name: str,
     desc: str = typer.Option("", help=Create.desc_help),
@@ -54,20 +54,20 @@ def create(
         typer.echo(Create.dupe_exist_no_f)
 
 
-@app.command()
+@app.command(no_args_is_help=True)
 def follow(
     item_type: str = typer.Argument(
         ..., help="Item type to follow: 'playlist' or 'artist'"
     ),
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
-    """Follow a followable item (playlist or artist)"""
+    """Follow a followable item"""
     item: Item = spot.get_item(item_type, item_id)
     collection: ItemCollection = spot.get_collection(item_type)
 
     # Check that item is followable
     if collection is None:
-        typer.echo(f"Item of type '{item_type}' cannot be followed!")
+        typer.echo(f"Item of type '{item_type}' cannot be followed/saved!")
         sys.exit(1)
 
     # Check if the given item_id corresponds to an actual item
@@ -82,7 +82,21 @@ def follow(
     sys.exit(0)
 
 
-@app.command()
+@app.command(no_args_is_help=True)
+def save(
+    item_type: str = typer.Argument(
+        ..., help="Item type to save: 'album', 'track', 'show', or 'episode'"
+    ),
+    item_id: str = typer.Argument(..., help=Follow.id_help),
+):
+    """Save a saveable item; This is an alias for 'follow'"""
+
+    # Since 'saving' an item works the same as 'following' an item from an interface perspective,
+    # you are just adding an item to a collection, we can re-use the follow command for saving.
+    follow(item_type=item_type, item_id=item_id)
+
+
+@app.command(no_args_is_help=True)
 def unfollow(
     item_type: str = typer.Argument(
         ..., help="Item type to follow: 'playlist' or 'artist'"
@@ -128,7 +142,21 @@ def unfollow(
     typer.echo(General.op_canceled)
 
 
-@app.command()
+@app.command(no_args_is_help=True)
+def unsave(
+    item_type: str = typer.Argument(
+        ..., help="Item type to unsave: 'album', 'track', 'show', or 'episode'"
+    ),
+    item_id: str = typer.Argument(..., help=Follow.id_help),
+):
+    """Unsave a saveable item; This is an alias for 'unfollow'"""
+
+    # Since 'unsaving' an item works the same as 'unfollowing' an item from an interface perspective,
+    # you are just removing an item from a collection, we can re-use the unfollow command for unsaving.
+    unfollow(item_type=item_type, item_id=item_id)
+
+
+@app.command(no_args_is_help=True)
 def search(
     item_type: str = typer.Argument(
         ..., help="Item type to follow: 'playlist' or 'artist'"
