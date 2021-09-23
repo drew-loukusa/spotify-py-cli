@@ -22,6 +22,8 @@ USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SCOPE = "playlist-modify-private \
             user-follow-read \
             user-follow-modify \
+            user-library-read \
+            user-library-modify \
             playlist-read-private \
             playlist-read-collaborative \
             playlist-modify-public"
