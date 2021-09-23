@@ -1,13 +1,23 @@
+from os import name
 import re
-
-from spotipy_facade import USE_DUMMY_WRAPPER
+from typing import List
 
 from typer.testing import CliRunner
+
+from spotipy_facade import USE_DUMMY_WRAPPER
 from spotify_cli import spot, app
 
-from items import Playlist, Artist
-from user_libary import FollowedPlaylists, FollowedArtists
-from app_strings import General, Create, Search, Unfollow, Follow
+from interfaces import Item, ItemCollection
+from items import Show, Episode, Track, Playlist, Artist, Album
+from user_libary import (
+    FollowedPlaylists,
+    FollowedArtists,
+    SavedAlbums,
+    SavedEpisodes,
+    SavedShows,
+    SavedTracks,
+)
+from app_strings import General, Create, Search, Unfollow, Follow, Save, Unsave
 
 runner = CliRunner()
 
@@ -103,119 +113,188 @@ class TestCreate:
         assert Create.collab_status.format("True") in result.stdout
 
 
+# Configurable function for other tests to use
+# End with _ so pytest doesnt't run this
+def modify_collection_test_(
+    action: str,
+    item_name: str,
+    item_type: str,
+    item_id: str,
+    ItemClass: Item,
+    Collection: ItemCollection,
+    output_text: str,
+    flags: List[str] = None,
+):
+    """
+    action:     'follow' | 'unfollow' | 'save' | 'unsave'
+    item_type:  'playlist' | 'artist' | 'album' | 'track' | 'show' | 'episode'
+    ItemClass:  Playlist | Artist | Album | Track | Show | Episode
+    Collection: FollowedPlaylists | FollowedArtists | SavedAlbums | SavedTracks | SavedShows | SavedEpisodes
+    output_text: What text should appear in standard out as result of command run
+    flags: Additional flags to be used with the commmand
+    """
+    item = ItemClass(spot.sp, item_id)
+    collection = Collection(spot.sp)
+
+    was_contained = collection.contains(item)
+    if was_contained and action in {"follow", "save"}:
+        collection.remove(item)
+
+    if USE_DUMMY_WRAPPER:
+        extern = False
+        if action in {"follow", "save"}:
+            extern = True
+        spot.sp.create_item(
+            item_type=item_type,
+            item_id=item_id,
+            item_name=item_name,
+            extern=extern,
+        )
+    args = [action, item_type, item_id]
+    if flags is not None:
+        args.extend(flags)
+    result = runner.invoke(app, args=args)
+    contained = collection.contains(item)
+
+    if action in {"follow", "save"}:
+        # Cleanup
+        if contained and not was_contained:
+            collection.remove(item)
+        assert contained == True
+
+    elif action in {"unfollow", "unsave"}:
+        # Cleanup
+        if not contained and was_contained:
+            collection.add(item)
+        assert contained == False
+
+    assert output_text in result.stdout
+
+
 class TestFollow:
     def test_follow_pl_by_id(self):
         item_type = "playlist"
-        test_name = "Massive Drum & Bass"
-        pl_id = "37i9dQZF1DX5wDmLW735Yd"
+        item_name = "Massive Drum & Bass"
+        item_id = "37i9dQZF1DX5wDmLW735Yd"
 
-        fp = FollowedPlaylists(spot.sp)
-        playlist = Playlist(spot.sp, pl_id)
-        was_following = fp.contains(playlist)
-        if was_following:
-            playlist.unfollow()
-
-        if USE_DUMMY_WRAPPER:
-            spot.sp.create_non_followed_playlist(test_name, pl_id)
-        result = runner.invoke(app, ["follow", item_type, pl_id])
-
-        following = fp.contains(playlist)
-
-        # Cleanup
-        if following and not was_following:
-            fp.remove(playlist)
-
-        assert following == True
-        assert (
-            Follow.followed.format(item_type, test_name, pl_id) in result.stdout
+        modify_collection_test_(
+            action="follow",
+            item_name=item_name,
+            item_type="playlist",
+            item_id=item_id,
+            ItemClass=Playlist,
+            Collection=FollowedPlaylists,
+            output_text=Follow.followed.format(item_type, item_name, item_id),
         )
 
     def test_follow_artist_by_id(self):
-        test_name = "Weezer"
+        item_name = "Weezer"
         item_type = "artist"
-        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        item_id = "3jOstUTkEu2JkjvRdBA5Gu"
+        output_text = Follow.followed.format(item_type, item_name, item_id)
 
-        artist = Artist(spot.sp, artist_id)
-        fa = FollowedArtists(spot.sp)
+        modify_collection_test_(
+            action="follow",
+            item_name=item_name,
+            item_type=item_type,
+            item_id=item_id,
+            ItemClass=Artist,
+            Collection=FollowedArtists,
+            output_text=output_text,
+        )
 
-        was_following = fa.contains(artist)
-        if was_following:
-            fa.remove(artist)
 
-        if USE_DUMMY_WRAPPER:
-            spot.sp.create_non_followed_artist(artist_id, test_name)
-        result = runner.invoke(app, ["follow", item_type, artist_id])
+class TestSave:
+    def _test_save_item(
+        self,
+        item_name: str,
+        item_type: str,
+        item_id: str,
+        ItemClass: Item,
+        Collection: ItemCollection,
+    ):
+        output_text = Save.saved.format(item_type, item_name, item_id)
+        modify_collection_test_(
+            action="save",
+            item_name=item_name,
+            item_type=item_type,
+            item_id=item_id,
+            ItemClass=ItemClass,
+            Collection=Collection,
+            output_text=output_text,
+        )
 
-        following = fa.contains(artist)
+    def test_save_episode(self):
+        item_name = "003: I Need a Moment!"
+        item_type = "episode"
+        item_id = "0UGR0O3f4qiVq2npDPWTvk"
+        self._test_save_item(
+            item_name=item_name,
+            item_type=item_type,
+            item_id=item_id,
+            ItemClass=Episode,
+            Collection=SavedEpisodes,
+        )
 
-        # Cleanup
-        if following and not was_following:
-            fa.remove(artist)
+    def test_save_track(self):
+        self._test_save_item(
+            item_name="Behind The Glass",
+            item_type="track",
+            item_id="2Bm24tnHdB9hGuxIii7qPJ",
+            ItemClass=Track,
+            Collection=SavedTracks,
+        )
 
-        assert following == True
-        assert (
-            Follow.followed.format(item_type, test_name, artist_id)
-            in result.stdout
+    def test_save_show(self):
+        self._test_save_item(
+            item_name="Giant Bombcast",
+            item_type="show",
+            item_id="5as3aKmN2k11yfDDDSrvaZ",
+            ItemClass=Show,
+            Collection=SavedShows,
+        )
+
+    def test_save_album(self):
+        self._test_save_item(
+            item_name="Portals",
+            item_type="album",
+            item_id="6SC0Omssa5QQtX22zlZGEG",
+            ItemClass=Album,
+            Collection=SavedAlbums,
         )
 
 
 class TestUnfollow:
-
-    # NOTE: Tests involving name are commented out because I've stripped out
-    #       being able to use NAME to specify what items to unfollow... For now.
-    #       I'm trying switch to using interfaces to do things, and the added complexity from
-    #       trying to support selection by name is getting in my way.
-    #       These tests will come back at a later date, probably.
-
-    # def test_unfollow_artist_by_name(self):
-    #     test_name = "Weezer"
-    #     item_type = "artist"
-    #     artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
-    #     if USE_DUMMY_WRAPPER:
-    #         spot.sp.create_non_followed_artist(artist_id, test_name)
-    #     spot.get_followable(item_type, artist_id).follow()
-    #     #spot.follow_artist(artist_id)
-    #     result = runner.invoke(
-    #         app, ["unfollow", item_type, test_name, "--no-prompt"]
-    #     )
-
-    #     following = spot.sp.current_user_following_artists([artist_id])[0]
-
-    #     assert result.exit_code == 0
-    #     assert not following
-    #     assert (
-    #         Unfollow.unfollowed_item.format(test_name, artist_id)
-    #         in result.stdout
-    #     )
+    def unfollow_item(
+        self,
+        item_name: str,
+        item_type: str,
+        item_id: str,
+        ItemClass: Item,
+        Collection: ItemCollection,
+        flags: List[str],
+    ):
+        output_text = Unfollow.unfollowed_item.format(item_name, item_id)
+        modify_collection_test_(
+            action="unfollow",
+            item_name=item_name,
+            item_type=item_type,
+            item_id=item_id,
+            ItemClass=ItemClass,
+            Collection=Collection,
+            output_text=output_text,
+            flags=flags,
+        )
 
     def test_unfollow_artist_by_id(self):
-        test_name = "Weezer"
-        item_type = "artist"
-        artist_id = "3jOstUTkEu2JkjvRdBA5Gu"
-        if USE_DUMMY_WRAPPER:
-            spot.sp.create_non_followed_artist(artist_id, test_name)
-        artist = Artist(spot.sp, artist_id)
-        fa = FollowedArtists(spot.sp)
-        result = runner.invoke(
-            app, ["unfollow", item_type, artist_id, "--no-prompt"]
+        self.unfollow_item(
+            item_name="Weezer",
+            item_type="artist",
+            item_id="3jOstUTkEu2JkjvRdBA5Gu",
+            ItemClass=Artist,
+            Collection=FollowedArtists,
+            flags=["--no-prompt"],
         )
-
-        following = fa.contains(artist)
-
-        if following:
-            fa.remove(artist)
-
-        assert result.exit_code == 0
-        assert not following
-        assert (
-            Unfollow.unfollowed_item.format(test_name, artist_id)
-            in result.stdout
-        )
-
-    # def test_unfollow_no_name_or_id(self):
-    #     result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
-    #     assert result.exit_code == 1
-    #     assert General.spec_name_id in result.stdout
 
     def test_unfollow_pl_prompt_cancled(self):
         pl_id = spot.create_playlist(TEST_PL_NAME)
@@ -244,53 +323,22 @@ class TestUnfollow:
         if following:
             fp.remove(playlist)
 
+        assert not following
         assert result.exit_code == 0
         assert (
             Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
             in result.stdout
         )
-        assert not following
-
-    # Redundant for now, since ID is the only thing supported
-    # def test_unfollow_pl_by_id(self):
-    #     pl_id = spot.create_playlist(TEST_PL_NAME)
-
-    #     result = runner.invoke(
-    #         app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
-    #     )
-    #     item_type = "playlist"
-    #     following = spot.get_item(item_type, pl_id).following()
-
-    #     # Cleanup, if needed
-    #     if following:
-    #         spot.unfollow_playlist(pl_id)
-
-    #     assert result.exit_code == 0
-    #     assert (
-    #         Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-    #         in result.stdout
-    #     )
-    #     assert not following
 
     def test_unfollow_pl_no_prompt(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
-        playlist = Playlist(spot.sp, pl_id)
-        result = runner.invoke(
-            app, ["unfollow", "playlist", "--no-prompt", pl_id]
+        self.unfollow_item(
+            item_type="playlist",
+            item_name="Massive Drum & Bass",
+            item_id="37i9dQZF1DX5wDmLW735Yd",
+            ItemClass=Playlist,
+            Collection=FollowedPlaylists,
+            flags=["--no-prompt"],
         )
-        fp = FollowedPlaylists(spot.sp)
-        following = fp.contains(playlist)
-
-        # Cleanup, if needed
-        if following:
-            fp.remove(playlist)
-
-        assert result.exit_code == 0
-        assert (
-            Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-            in result.stdout
-        )
-        assert not following
 
     def test_unfollow_pl_DNE(self):
         item_type = "playlist"
@@ -302,26 +350,62 @@ class TestUnfollow:
             General.item_DNE.format(item_type, "id", "DNE_ID") in result.stdout
         )
 
-    # def test_unfollow_pl_name_clash_no_prompt(self):
-    #     """
-    #     Test deleting when multiple lists exist with same name and
-    #     --no-prompt flag was used ()
-    #     If multiple lists exist with given name, cli does not know
-    #     which to unfollow. It should exit with code 1, and tell user.
-    #     """
-    #     pl_id1 = spot.create_playlist(TEST_PL_NAME)
-    #     pl_id2 = spot.create_playlist(TEST_PL_NAME)
 
-    #     result = runner.invoke(
-    #         app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
-    #     )
+class TestUnsave:
+    def unsave_item(
+        self,
+        item_name: str,
+        item_type: str,
+        item_id: str,
+        ItemClass: Item,
+        Collection: ItemCollection,
+    ):
+        output_text = Unsave.unsaved.format(item_type, item_name, item_id)
+        modify_collection_test_(
+            action="unsave",
+            item_name=item_name,
+            item_type=item_type,
+            item_id=item_id,
+            ItemClass=ItemClass,
+            Collection=Collection,
+            output_text=output_text,
+        )
 
-    #     # Cleanup
-    #     spot.unfollow_playlist(pl_id1)
-    #     spot.unfollow_playlist(pl_id2)
+    def test_unsave_episode(self):
+        self.unsave_item(
+            item_name="003: I Need a Moment!",
+            item_type="episode",
+            item_id="0UGR0O3f4qiVq2npDPWTvk",
+            ItemClass=Episode,
+            Collection=SavedEpisodes,
+        )
 
-    #     assert result.exit_code == 0
-    #     assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
+    def test_unsave_track(self):
+        self.unsave_item(
+            item_name="Behind The Glass",
+            item_type="track",
+            item_id="2Bm24tnHdB9hGuxIii7qPJ",
+            ItemClass=Track,
+            Collection=SavedTracks,
+        )
+
+    def test_unsave_show(self):
+        self.unsave_item(
+            item_name="Giant Bombcast",
+            item_type="show",
+            item_id="5as3aKmN2k11yfDDDSrvaZ",
+            ItemClass=Show,
+            Collection=SavedShows,
+        )
+
+    def test_unsave_album(self):
+        self.unsave_item(
+            item_name="Portals",
+            item_type="album",
+            item_id="6SC0Omssa5QQtX22zlZGEG",
+            ItemClass=Album,
+            Collection=SavedAlbums,
+        )
 
 
 class TestSearch:
@@ -409,3 +493,79 @@ class TestSearch:
         pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
+
+
+# NOTE: Tests involving name are commented out because I've stripped out
+#       being able to use NAME to specify what items to unfollow... For now.
+#       I'm trying switch to using interfaces to do things, and the added complexity from
+#       trying to support selection by name is getting in my way.
+#       These tests will come back at a later date, probably.
+
+# Most of these go into "Unfollow"
+# def test_unfollow_pl_name_clash_no_prompt(self):
+#     """
+#     Test deleting when multiple lists exist with same name and
+#     --no-prompt flag was used ()
+#     If multiple lists exist with given name, cli does not know
+#     which to unfollow. It should exit with code 1, and tell user.
+#     """
+#     pl_id1 = spot.create_playlist(TEST_PL_NAME)
+#     pl_id2 = spot.create_playlist(TEST_PL_NAME)
+
+#     result = runner.invoke(
+#         app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
+#     )
+
+#     # Cleanup
+#     spot.unfollow_playlist(pl_id1)
+#     spot.unfollow_playlist(pl_id2)
+
+#     assert result.exit_code == 0
+#     assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
+
+# def test_unfollow_artist_by_name(self):
+#     item_name = "Weezer"
+#     item_type = "artist"
+#     item_id = "3jOstUTkEu2JkjvRdBA5Gu"
+#     if USE_DUMMY_WRAPPER:
+#         spot.sp.create_non_followed_artist(item_id, item_name)
+#     spot.get_followable(item_type, item_id).follow()
+#     #spot.follow_artist(item_id)
+#     result = runner.invoke(
+#         app, ["unfollow", item_type, item_name, "--no-prompt"]
+#     )
+
+#     following = spot.sp.current_user_following_artists([item_id])[0]
+
+#     assert result.exit_code == 0
+#     assert not following
+#     assert (
+#         Unfollow.unfollowed_item.format(item_name, item_id)
+#         in result.stdout
+#     )
+
+# Redundant for now, since ID is the only thing supported
+# def test_unfollow_pl_by_id(self):
+#     pl_id = spot.create_playlist(TEST_PL_NAME)
+
+#     result = runner.invoke(
+#         app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
+#     )
+#     item_type = "playlist"
+#     following = spot.get_item(item_type, pl_id).following()
+
+#     # Cleanup, if needed
+#     if following:
+#         spot.unfollow_playlist(pl_id)
+
+#     assert result.exit_code == 0
+#     assert (
+#         Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
+#         in result.stdout
+#     )
+#     assert not following
+
+# def test_unfollow_no_name_or_id(self):
+#     result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
+#     assert result.exit_code == 1
+#     assert General.spec_name_id in result.stdout

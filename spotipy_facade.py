@@ -1,12 +1,21 @@
 """This module contains a facade class built on top of spotipy Spotify wrapper"""
-from typing import List
+from interfaces import Item, ItemCollection
+from typing import Collection, List
 
 import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 
-from items import Artist, Playlist
-from user_libary import FollowedArtists, FollowedPlaylists
+from app_strings import General
+from items import Artist, Playlist, Track, Album, Episode, Show
+from user_libary import (
+    FollowedArtists,
+    FollowedPlaylists,
+    SavedTracks,
+    SavedAlbums,
+    SavedEpisodes,
+    SavedShows,
+)
 from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
@@ -27,7 +36,10 @@ class SpotipySpotifyFacade:
     A facade for simplifying interaction with spotipy's Spotify object.
     """
 
-    def __init__(self):
+    def __init__(self, output_object=None):
+        """
+        output_object: Optional, any function capable of printing text. If configured with an object, this is where the facade will send output.
+        """
         self.sp = SpotifyWrapper(
             auth_manager=SpotifyOAuth(
                 client_id=config("SPOTIPY_CLIENT_ID"),
@@ -40,7 +52,12 @@ class SpotipySpotifyFacade:
         self.types = {
             "playlist": {"item": Playlist, "collection": FollowedPlaylists},
             "artist": {"item": Artist, "collection": FollowedArtists},
+            "track": {"item": Track, "collection": SavedTracks},
+            "album": {"item": Album, "collection": SavedAlbums},
+            "episode": {"item": Episode, "collection": SavedEpisodes},
+            "show": {"item": Show, "collection": SavedShows},
         }
+        self.output = output_object
 
     def get_item(self, item_type, item_id):
         return self.types[item_type]["item"](self.sp, item_id)
@@ -75,6 +92,34 @@ class SpotipySpotifyFacade:
         # Getting an item for unfollowing means get the item from the user's followed itmes
         # gettting an item for following means searching the publicly available items
         pass
+
+    def get_item_and_collection(
+        self, item_type: str, item_id: str, output_stream=None
+    ):
+        """
+        Get an Item object and an ItemCollection object base on item_type and item_id.
+        Checks to see if the item exists, and if item_type is valid.
+
+        Sends error messages to self.output, if configured.
+
+        If successful, returns two objects, otherwise returns None
+        """
+        item = self.get_item(item_type, item_id)
+        collection = self.get_collection(item_type)
+
+        # Check that item_type is valid
+        if collection is None:
+            if self.output is not None:
+                self.output(f"Item of type '{item_type}' not recognized!")
+            return None, None
+
+        # Check if the given item_id corresponds to an actual item
+        if item.info is None:
+            if self.output is not None:
+                self.output(General.item_DNE.format(item_type, "id", item_id))
+            return None, None
+
+        return item, collection
 
     def search_public(self, item_type, query, limit=10, offset=0, market=None):
         raw_items = self.sp.search(query, limit, offset, item_type, market)

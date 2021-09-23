@@ -36,8 +36,18 @@ class Create:
 
 
 class Follow:
-    id_help = "Use id to specify item"
+    id_help = "Use id to specify item to follow"
     followed = "Followed {} with name: {}, id: {}"
+
+
+class Save:
+    id_help = "Use id to specify item to save"
+    saved = "Saved {} with name: {}, id: {}"
+
+
+class Unsave:
+    id_help = "Use id to specify item to unsave"
+    unsaved = "Unsaved {} with name: {}, id: {}"
 
 
 class Unfollow:

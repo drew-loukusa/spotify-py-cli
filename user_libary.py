@@ -37,7 +37,9 @@ class SavedEpisodes(ItemCollection, Mutable):
         self.sp.current_user_saved_episodes_delete(episodes=[item.id])
 
     def contains(self, item: Episode):
-        return self.sp.current_user_saved_episodes_contains(episodes=[item.id])
+        return self.sp.current_user_saved_episodes_contains(episodes=[item.id])[
+            0
+        ]
 
 
 class SavedTracks(ItemCollection, Mutable):
@@ -67,7 +69,7 @@ class SavedTracks(ItemCollection, Mutable):
         self.sp.current_user_saved_tracks_delete(tracks=[item.id])
 
     def contains(self, item: Track):
-        return self.sp.current_user_saved_tracks_contains(tracks=[item.id])
+        return self.sp.current_user_saved_tracks_contains(tracks=[item.id])[0]
 
 
 class SavedShows(ItemCollection, Mutable):
@@ -91,13 +93,13 @@ class SavedShows(ItemCollection, Mutable):
         return shows
 
     def contains(self, item: Show):
-        return self.sp.current_user_saved_shows_contains(shows=[item.id])
+        return self.sp.current_user_saved_shows_contains(shows=[item.id])[0]
 
     def add(self, item: Show):
         self.sp.current_user_saved_shows_add(shows=[item.id])
 
     def remove(self, item: Item):
-        self.sp.current_user_saved_shows_add(shows=[item.id])
+        self.sp.current_user_saved_shows_delete(shows=[item.id])
 
 
 class SavedAlbums(ItemCollection, Mutable):
@@ -127,7 +129,7 @@ class SavedAlbums(ItemCollection, Mutable):
         self.sp.current_user_saved_albums_delete(albums=[item.id])
 
     def contains(self, item: Album):
-        self.sp.current_user_saved_albums_contains(albums=[item.id])
+        return self.sp.current_user_saved_albums_contains(albums=[item.id])[0]
 
 
 class FollowedPlaylists(ItemCollection, Mutable):

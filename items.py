@@ -33,10 +33,9 @@ class Track(Item):
     """
 
     def __init__(self, sp: Spotify, item_id: str, info=None):
-        if info is None:
-            info = Item._get_item(sp.episode, item_id)
-        name = info["name"]
-        super().__init__(item_id, sp, info, name, item_type="track")
+        super().__init__(
+            sp, sp.track, item_id=item_id, item_type="track", info=info
+        )
 
     def __repr__(self) -> str:
         return f"<Track: name: {self.name}, id: {self.id}>"

@@ -3,12 +3,12 @@
 import sys
 
 import typer
-from interfaces import Item, ItemCollection
+
 from spotipy_facade import SpotipySpotifyFacade
-from app_strings import General, Create, Search, Follow, Unfollow
+from app_strings import General, Create, Search, Follow, Unfollow, Save, Unsave
 
 
-spot = SpotipySpotifyFacade()
+spot = SpotipySpotifyFacade(output_object=typer.echo)
 app = typer.Typer()
 
 
@@ -62,24 +62,17 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item"""
-    item: Item = spot.get_item(item_type, item_id)
-    collection: ItemCollection = spot.get_collection(item_type)
 
-    # Check that item is followable
-    if collection is None:
-        typer.echo(f"Item of type '{item_type}' cannot be followed/saved!")
-        sys.exit(1)
+    item, collection = spot.get_item_and_collection(
+        item_type=item_type, item_id=item_id
+    )
 
-    # Check if the given item_id corresponds to an actual item
-    if item.info is None:
-        typer.echo(General.item_DNE.format(item_type, "id", item_id))
-        sys.exit(1)
+    if item is not None and collection is not None:
+        collection.add(item)
+        typer.echo(Follow.followed.format(item_type, item.name, item_id))
+        sys.exit(0)
 
-    # Follow the item
-    collection.add(item)
-
-    typer.echo(Follow.followed.format(item_type, item.name, item_id))
-    sys.exit(0)
+    sys.exit(1)
 
 
 @app.command(no_args_is_help=True)
@@ -89,11 +82,18 @@ def save(
     ),
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
-    """Save a saveable item; This is an alias for 'follow'"""
+    """Save a saveable item"""
 
-    # Since 'saving' an item works the same as 'following' an item from an interface perspective,
-    # you are just adding an item to a collection, we can re-use the follow command for saving.
-    follow(item_type=item_type, item_id=item_id)
+    item, collection = spot.get_item_and_collection(
+        item_type=item_type, item_id=item_id
+    )
+
+    if item is not None and collection is not None:
+        collection.add(item)
+        typer.echo(Save.saved.format(item_type, item.name, item_id))
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @app.command(no_args_is_help=True)
@@ -113,16 +113,11 @@ def unfollow(
     This "deletes" playlists you've created.
     """
     # Retrieve item matching item_id
-    item: Item = spot.get_item(item_type, item_id)
-    collection: ItemCollection = spot.get_collection(item_type)
+    item, collection = spot.get_item_and_collection(
+        item_type=item_type, item_id=item_id
+    )
 
-    if collection is None:
-        typer.echo(f"Item of type '{item_type}' cannot be unfollowed!")
-        sys.exit(1)
-
-    # Check if item_id is valid. If it isn't item.info will be None
-    if item.info is None:
-        typer.echo(General.item_DNE.format(item_type, "id", item_id))
+    if item is None or collection is None:
         sys.exit(1)
 
     # If '--no-prompt' was not used, confirm Unfollow with user
@@ -149,11 +144,18 @@ def unsave(
     ),
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
-    """Unsave a saveable item; This is an alias for 'unfollow'"""
+    """Unsave a saveable item"""
 
-    # Since 'unsaving' an item works the same as 'unfollowing' an item from an interface perspective,
-    # you are just removing an item from a collection, we can re-use the unfollow command for unsaving.
-    unfollow(item_type=item_type, item_id=item_id)
+    item, collection = spot.get_item_and_collection(
+        item_type=item_type, item_id=item_id
+    )
+
+    if item is not None and collection is not None:
+        collection.remove(item)
+        typer.echo(Unsave.unsaved.format(item_type, item.name, item_id))
+        sys.exit(0)
+
+    sys.exit(1)
 
 
 @app.command(no_args_is_help=True)
