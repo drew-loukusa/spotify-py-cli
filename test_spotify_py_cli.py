@@ -1,6 +1,6 @@
 from os import name
 import re
-from typing import List
+from typing import List, Literal
 
 from typer.testing import CliRunner
 
@@ -17,7 +17,16 @@ from user_libary import (
     SavedShows,
     SavedTracks,
 )
-from app_strings import General, Create, Search, Unfollow, Follow, Save, Unsave
+from app_strings import (
+    General,
+    Create,
+    Listing,
+    Search,
+    Unfollow,
+    Follow,
+    Save,
+    Unsave,
+)
 
 runner = CliRunner()
 
@@ -493,6 +502,57 @@ class TestSearch:
         pattern = Search.num_items_found.replace("{}", r"\d+", 1)
         pattern = pattern.replace("{}", ".+", 1)
         assert re.search(pattern, result.stdout)
+
+
+class TestList:
+    def _test_list(self, *args):
+        item_type = args[0]
+        output_text = Listing.listing
+        args = ["list"] + list(args)
+        result = runner.invoke(app, args)
+        assert output_text.format(item_type) in result.stdout
+
+        if "--retrieve-all" not in args:
+            limit, offset, = (
+                10,
+                0,
+            )
+            for i, arg in enumerate(args):
+                if arg == "--limit":
+                    limit = args[i + 1]
+                if arg == "--offset":
+                    offset = args[i + 1]
+            assert Listing.params.format(limit, offset) in result.stdout
+        else:
+            assert Listing.ret_all in result.stdout
+        assert result.exit_code == 0
+
+    def test_list_followed_playlists(self):
+        self._test_list("playlist")
+
+    def test_list_followed_artists(self):
+        self._test_list("artist")
+
+    def test_list_followed_albums(self):
+        self._test_list("album")
+
+    def test_list_followed_shows(self):
+        self._test_list("show")
+
+    def test_list_followed_tracks(self):
+        self._test_list("track")
+
+    def test_list_followed_episodes(self):
+        self._test_list("episode")
+
+    def test_limit_change(self):
+        self._test_list("track", "--limit", 100)
+
+    def test_limit_change(self):
+        self._test_list("track", "--offset", 50)
+
+    def test_retrieve_all(self):
+        self._test_list("track", "--retrieve-all")
 
 
 # NOTE: Tests involving name are commented out because I've stripped out

@@ -1,11 +1,21 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
+import collections
 import sys
 
 import typer
 
 from spotipy_facade import SpotipySpotifyFacade
-from app_strings import General, Create, Search, Follow, Unfollow, Save, Unsave
+from app_strings import (
+    General,
+    Create,
+    Listing,
+    Search,
+    Follow,
+    Unfollow,
+    Save,
+    Unsave,
+)
 
 
 spot = SpotipySpotifyFacade(output_object=typer.echo)
@@ -203,6 +213,31 @@ def search(
 
         typer.echo(Search.num_items_found.format(len(items), query))
         spot.print_items(typer.echo, items)
+
+
+@app.command(no_args_is_help=True)
+def list(
+    item_type: str = typer.Argument(
+        ..., help="Item type of collection to list"
+    ),
+    limit: int = typer.Option(10, help="TODO: Add help"),
+    offset: int = typer.Option(0, help="TODO: Add help"),
+    retrieve_all: bool = typer.Option(False, help="TODO: Add help"),
+):
+    collection = spot.get_collection(item_type)
+    if collection is None:
+        typer.echo(f"Collection for type {item_type} does not exist")
+        sys.exit(1)
+
+    typer.echo(Listing.listing.format(item_type))
+    if not retrieve_all:
+        typer.echo(Listing.params.format(limit, offset))
+    else:
+        typer.echo(Listing.ret_all)
+    for item in collection.items(
+        limit=limit, offset=offset, retrieve_all=retrieve_all
+    ):
+        typer.echo(item)
 
 
 if __name__ == "__main__":

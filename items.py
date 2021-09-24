@@ -60,9 +60,13 @@ class Show(Item, ItemCollection):
     def __str__(self):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
-    @property
-    def items(self):
-        raw_episodes = self._items(self.sp.show_episodes)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_episodes = self._items(
+            self.sp.show_episodes,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_episodes is None:
             return None
         episodes = []
@@ -72,7 +76,7 @@ class Show(Item, ItemCollection):
         return episodes
 
     def contains(self, item: Item):
-        for ep in self.items:
+        for ep in self.items(retrieve_all=True):
             if item.id == ep.id:
                 return True
         return False
@@ -113,9 +117,14 @@ class Playlist(Item, ItemCollection, Mutable):
         return "\n".join(pl_str)
 
     # Playlist implements ItemCollection since it "holds" a collection of tracks
-    @property
-    def items(self):
-        raw_tracks = self._items(self.sp.playlist_tracks, playlist_id=self.id)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_tracks = self._items(
+            self.sp.playlist_tracks,
+            playlist_id=self.id,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_tracks is None:
             return None
 
@@ -127,7 +136,7 @@ class Playlist(Item, ItemCollection, Mutable):
         return tracks
 
     def contains(self, item: Item):
-        for track in self.items:
+        for track in self.items(retrieve_all=True):
             if track.id == item.id:
                 return True
         else:
@@ -187,9 +196,14 @@ class Album(Item, ItemCollection):
     def __str__(self):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
-    @property
-    def items(self) -> List[Item]:
-        raw_tracks = self._get_item(self.sp.album_tracks, self.id)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_tracks = self._get_item(
+            self.sp.album_tracks,
+            album_id=self.id,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_tracks is None:
             return None
         tracks = []
@@ -199,7 +213,7 @@ class Album(Item, ItemCollection):
         return tracks
 
     def contains(self, item: Item):
-        for track in self.items:
+        for track in self.items(retrieve_all=True):
             if track.id == item.id:
                 return True
         else:

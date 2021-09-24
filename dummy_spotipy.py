@@ -104,7 +104,7 @@ class DummySpotipy:
         return bools
 
     def current_user_followed_artists(self, limit=20):
-        return {"artists": self.items["artist"]}
+        return {"artists": self.items["artist"], "next": None}
 
     def artist(self, artist_id):
         all_artists = (
@@ -209,6 +209,11 @@ class DummySpotipy:
     def album(self, album_id):
         return self.select_item("album", album_id, extern=1)
 
+    def current_user_saved_albums(self, limit=10, offset=0, market=None):
+        albums = self.items["album"]
+        albums.update({"next": None})
+        return albums
+
     def current_user_saved_albums_contains(self, albums: List[str]):
         return [self.contains("album", albums[0], extern=0)]
 
@@ -221,6 +226,11 @@ class DummySpotipy:
     # ============================== Shows ====================================#
     def show(self, show_id):
         return self.select_item("show", show_id, extern=1)
+
+    def current_user_saved_shows(self, limit=10, offset=0, market=None):
+        shows = self.items["show"]
+        shows.update({"next": None})
+        return shows
 
     def current_user_saved_shows_contains(self, shows: List[str]):
         return [self.contains("show", shows[0], extern=0)]
@@ -235,6 +245,11 @@ class DummySpotipy:
     def episode(self, ep_id):
         return self.select_item("episode", ep_id, extern=1)
 
+    def current_user_saved_episodes(self, limit=10, offset=0, market=None):
+        eps = self.items["episode"]
+        eps.update({"next": None})
+        return eps
+
     def current_user_saved_episodes_contains(self, episodes: List[str]):
         """episodes: list of id's"""
         return [self.contains("episode", episodes[0], extern=0)]
@@ -248,6 +263,11 @@ class DummySpotipy:
     # ============================== Tracks ===================================#
     def track(self, track_id):
         return self.select_item("track", track_id, extern=1)
+
+    def current_user_saved_tracks(self, limit=10, offset=0, market=None):
+        tracks = self.items["track"]
+        tracks.update({"next": None})
+        return tracks
 
     def current_user_saved_tracks_contains(self, tracks: List[str]):
         return [self.contains("track", tracks[0], extern=0)]

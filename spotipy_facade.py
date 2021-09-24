@@ -73,14 +73,14 @@ class SpotipySpotifyFacade:
 
     def get_followed_items(self, item_type):
         item_class = self.types[item_type]["collection"](self.sp)
-        return item_class.items
+        return item_class.items()
 
     def get_followed_item(
         self, item_type: str, item_name: str = None, item_id: str = None
     ) -> List[dict]:
         item_class = self.types[item_type]["collection"](self.sp)
         selected_items = []
-        for item in item_class.items:
+        for item in item_class.items():
             name, cur_id = item.name, item.id
             if (
                 item_name is not None and name.strip() == item_name.strip()

@@ -18,9 +18,13 @@ class SavedEpisodes(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
-        raw_episodes = self._items(self.sp.current_user_saved_episodes)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_episodes = self._items(
+            self.sp.current_user_saved_episodes,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_episodes is None:
             return None
 
@@ -50,9 +54,13 @@ class SavedTracks(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
-        raw_tracks = self._items(self.sp.current_user_saved_tracks)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_tracks = self._items(
+            self.sp.current_user_saved_tracks,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_tracks is None:
             return None
 
@@ -80,14 +88,18 @@ class SavedShows(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
-        raw_shows = self._items(self.sp.current_user_saved_shows)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_shows = self._items(
+            self.sp.current_user_saved_shows,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_shows is None:
             return None
 
         shows = []
-        for show in raw_shows["items"]:
+        for show in raw_shows:
             show = show["show"]
             shows.append(Show(self.sp, show["id"], show))
         return shows
@@ -110,14 +122,18 @@ class SavedAlbums(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
-        raw_albums = self._items(self.sp.current_user_saved_albums())
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_albums = self._items(
+            self.sp.current_user_saved_albums,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_albums is None:
             return None
 
         albums = []
-        for album in raw_albums["items"]:
+        for album in raw_albums:
             album = album["album"]
             albums.append(Album(self.sp, album["id"], album))
         return albums
@@ -140,9 +156,13 @@ class FollowedPlaylists(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
-        raw_playlists = self._items(self.sp.current_user_playlists)
+    def items(self, limit=20, offset=0, retrieve_all=False):
+        raw_playlists = self._items(
+            self.sp.current_user_playlists,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_playlists is None:
             return None
 
@@ -169,17 +189,23 @@ class FollowedArtists(ItemCollection, Mutable):
     def __init__(self, sp: Spotify):
         self.sp = sp
 
-    @property
-    def items(self):
+    def items(self, limit=20, offset=0, retrieve_all=False):
         # Wrap 'current_user_followed_artists' because the return format is different
         # from all other current user followed/saved get functions, for some reason.
         def wrapped_cur_followed_artists(*args, **kwargs):
+            if "offset" in kwargs:
+                kwargs.pop("offset")
             res = self.sp.current_user_followed_artists(*args, **kwargs)
             if res is None:
                 return None
             return res["artists"]
 
-        raw_artists = self._items(wrapped_cur_followed_artists)
+        raw_artists = self._items(
+            wrapped_cur_followed_artists,
+            limit=limit,
+            offset=offset,
+            retrieve_all=retrieve_all,
+        )
         if raw_artists is None:
             return None
 

@@ -58,26 +58,26 @@ class ItemCollection(metaclass=ABCMeta):
     A class can be an Item, and an ItemCollection, example: Playlist or Album
     """
 
-    def _items(self, concrete_items, *args, **kwargs):
+    def _items(self, concrete_item_getter, **kwargs):
+        retrieve_all = kwargs["retrieve_all"]
+        kwargs.pop("retrieve_all")
         raw_items = []
         more = True
-        offset = 0
         while more:
-            kwargs.update({"limit": 20, "offset": offset})
-
-            res = concrete_items(*args, **kwargs)
+            res = concrete_item_getter(**kwargs)
             if res is None:
                 return None
             raw_items.extend(res["items"])
-            if res["next"] != None:
-                offset += 20
+
+            if retrieve_all and res["next"] != None:
+                kwargs["offset"] += 20
             else:
                 more = False
+
         return raw_items
 
-    @property
     @abstractmethod
-    def items(self) -> List[Item]:
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Item]:
         """Get a list of the items in the collection"""
         raise NotImplementedError
 

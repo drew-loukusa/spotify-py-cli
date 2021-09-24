@@ -83,3 +83,9 @@ class Search:
 
     search_pub = "Searching public items..."
     num_items_found = "Found {} items matching the search query: '{}'"
+
+
+class Listing:
+    listing = "Listing your saved/followed {}s:"
+    params = "Limit: {}, Offset: {}"
+    ret_all = "Retrieving all items..."
