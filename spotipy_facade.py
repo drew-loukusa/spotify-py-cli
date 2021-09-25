@@ -1,12 +1,10 @@
 """This module contains a facade class built on top of spotipy Spotify wrapper"""
-from interfaces import Item, ItemCollection
-from typing import Collection, List
+from typing import List
 
 import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 
-from app_strings import General
 from items import Artist, Playlist, Track, Album, Episode, Show
 from user_libary import (
     FollowedArtists,
@@ -16,7 +14,7 @@ from user_libary import (
     SavedEpisodes,
     SavedShows,
 )
-from dummy_spotipy import DummySpotipy
+# from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SCOPE = "playlist-modify-private \
@@ -30,7 +28,8 @@ SCOPE = "playlist-modify-private \
 
 
 # If testing locally, use the dummy wrapper
-SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
+# SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
+SpotifyWrapper = spotipy.Spotify
 
 
 class SpotipySpotifyFacade:
@@ -118,7 +117,7 @@ class SpotipySpotifyFacade:
         # Check if the given item_id corresponds to an actual item
         if item.info is None:
             if self.output is not None:
-                self.output(General.item_DNE.format(item_type, "id", item_id))
+                self.output(f"No {item_type} exists with id: {item_id}")
             return None, None
 
         return item, collection

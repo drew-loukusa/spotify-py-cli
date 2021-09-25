@@ -4,6 +4,8 @@ All classes require a spotify instance for instantiation.
 All classes assume that the instance in question is configured to manage a user, 
 i.e. the Auth Manager used was a SpotifyOAuth object, (or implicit grant?... TODO: Look into that)
 """
+from typing import List
+
 from spotipy import Spotify
 
 from interfaces import Item, ItemCollection, Mutable
@@ -16,9 +18,9 @@ class SavedEpisodes(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Episode]:
         raw_episodes = self._items(
             self.sp.current_user_saved_episodes,
             limit=limit,
@@ -52,9 +54,9 @@ class SavedTracks(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Track]:
         raw_tracks = self._items(
             self.sp.current_user_saved_tracks,
             limit=limit,
@@ -86,9 +88,9 @@ class SavedShows(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Show]:
         raw_shows = self._items(
             self.sp.current_user_saved_shows,
             limit=limit,
@@ -120,9 +122,9 @@ class SavedAlbums(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Album]:
         raw_albums = self._items(
             self.sp.current_user_saved_albums,
             limit=limit,
@@ -154,9 +156,9 @@ class FollowedPlaylists(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Playlist]:
         raw_playlists = self._items(
             self.sp.current_user_playlists,
             limit=limit,
@@ -187,9 +189,9 @@ class FollowedArtists(ItemCollection, Mutable):
     """
 
     def __init__(self, sp: Spotify):
-        self.sp = sp
+        self.sp: Spotify = sp
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Artist]:
         # Wrap 'current_user_followed_artists' because the return format is different
         # from all other current user followed/saved get functions, for some reason.
         def wrapped_cur_followed_artists(*args, **kwargs):

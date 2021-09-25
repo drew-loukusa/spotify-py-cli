@@ -1,6 +1,5 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
-import collections
 import sys
 
 import typer

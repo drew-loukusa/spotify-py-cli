@@ -60,7 +60,7 @@ class Show(Item, ItemCollection):
     def __str__(self):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Episode]:
         raw_episodes = self._items(
             self.sp.show_episodes,
             limit=limit,
@@ -117,7 +117,7 @@ class Playlist(Item, ItemCollection, Mutable):
         return "\n".join(pl_str)
 
     # Playlist implements ItemCollection since it "holds" a collection of tracks
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Track]:
         raw_tracks = self._items(
             self.sp.playlist_tracks,
             playlist_id=self.id,
@@ -196,7 +196,7 @@ class Album(Item, ItemCollection):
     def __str__(self):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Track]:
         raw_tracks = self._get_item(
             self.sp.album_tracks,
             album_id=self.id,

@@ -1,0 +1,49 @@
+digraph "classes" {
+fontname="Consolas"
+rankdir=BT
+charset="utf-8"
+//==============================================================================================================//
+"interfaces.ItemCollection" [fontname = "helvetica", color="black", fontcolor="black", label="{ItemCollection|\<\<interface\>\>\l|contains(...)\litems(...)\l}", shape="record", style="solid"];
+"interfaces.Mutable" [fontname = "helvetica", color="black", fontcolor="black", label="{Mutable|\<\<interface\>\>\l|add(...)\lremove(...)\l}", shape="record", style="solid"];
+"interfaces.Item" [fontname = "helvetica", color="black", fontcolor="black", label="{Item|\<\<abstract\>\>|id : str\linfo : dict, NoneType\lmsg : str\lname : NoneType\lsp: Spotify\ltype : str\l|__str__()\l}", shape="record", style="solid"];
+//"interfaces.Item" [fontname = "helvetica", color="black", fontcolor="black", label=<<I>text</I>>, shape="record", style="solid"];
+//==============================================================================================================//
+"user_libary.FollowedArtists" [fontname = "helvetica", color="black", fontcolor="black", label="{FollowedArtists|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"user_libary.FollowedPlaylists" [fontname = "helvetica", color="black", fontcolor="black", label="{FollowedPlaylists|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"user_libary.SavedAlbums" [fontname = "helvetica", color="black", fontcolor="black", label="{SavedAlbums|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"user_libary.SavedEpisodes" [fontname = "helvetica", color="black", fontcolor="black", label="{SavedEpisodes|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"user_libary.SavedShows" [fontname = "helvetica", color="black", fontcolor="black", label="{SavedShows|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"user_libary.SavedTracks" [fontname = "helvetica", color="black", fontcolor="black", label="{SavedTracks|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+//==============================================================================================================//
+"user_libary.FollowedArtists" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.FollowedArtists" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.FollowedPlaylists" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.FollowedPlaylists" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedAlbums" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedAlbums" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedEpisodes" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedEpisodes" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedShows" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedShows" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedTracks" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"user_libary.SavedTracks" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+//==============================================================================================================//
+"items.Album" [fontname = "helvetica", color="black", fontcolor="black", label="{Album|sp: Spotify\l|contains(...)\litems(...)\l}", shape="record", style="solid"];
+"items.Artist" [fontname = "helvetica", color="black", fontcolor="black", label="{Artist|sp: Spotify\l|}", shape="record", style="solid"];
+"items.Episode" [fontname = "helvetica", color="black", fontcolor="black", label="{Episode|sp: Spotify\l|}", shape="record", style="solid"];
+"items.Playlist" [fontname = "helvetica", color="black", fontcolor="black", label="{Playlist|sp: Spotify\l|add(...)\lcontains(...)\litems(...)\lremove(...)\l}", shape="record", style="solid"];
+"items.Show" [fontname = "helvetica", color="black", fontcolor="black", label="{Show|sp: Spotify\l|contains(...)\litems(...)\l}", shape="record", style="solid"];
+"items.Track" [fontname = "helvetica", color="black", fontcolor="black", label="{Track|sp: Spotify\l|}", shape="record", style="solid"];
+//==============================================================================================================//
+"items.Album" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Album" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Playlist" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Playlist" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Playlist" -> "interfaces.Mutable" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Show" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Show" -> "interfaces.ItemCollection" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Episode" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Artist" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+"items.Track" -> "interfaces.Item" [arrowhead="empty", arrowtail="none", style="dashed"];
+//==============================================================================================================//
+}
