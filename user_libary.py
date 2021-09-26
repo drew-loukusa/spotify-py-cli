@@ -34,10 +34,10 @@ class SavedEpisodes(ItemCollection, Mutable):
             episodes.append(Episode(self.sp, ep["id"], ep))
         return episodes
 
-    def add(self, item: Episode):
+    def add(self, item: Episode, **kwargs):
         self.sp.current_user_saved_episodes_add(episodes=[item.id])
 
-    def remove(self, item: Episode):
+    def remove(self, item: Episode, **kwargs):
         self.sp.current_user_saved_episodes_delete(episodes=[item.id])
 
     def contains(self, item: Episode):
@@ -70,10 +70,10 @@ class SavedTracks(ItemCollection, Mutable):
             tracks.append(Track(self.sp, track["id"], track))
         return tracks
 
-    def add(self, item: Track):
+    def add(self, item: Track, **kwargs):
         self.sp.current_user_saved_tracks_add(tracks=[item.id])
 
-    def remove(self, item: Track):
+    def remove(self, item: Track, **kwargs):
         self.sp.current_user_saved_tracks_delete(tracks=[item.id])
 
     def contains(self, item: Track):
@@ -107,10 +107,10 @@ class SavedShows(ItemCollection, Mutable):
     def contains(self, item: Show):
         return self.sp.current_user_saved_shows_contains(shows=[item.id])[0]
 
-    def add(self, item: Show):
+    def add(self, item: Show, **kwargs):
         self.sp.current_user_saved_shows_add(shows=[item.id])
 
-    def remove(self, item: Item):
+    def remove(self, item: Item, **kwargs):
         self.sp.current_user_saved_shows_delete(shows=[item.id])
 
 
@@ -138,10 +138,10 @@ class SavedAlbums(ItemCollection, Mutable):
             albums.append(Album(self.sp, album["id"], album))
         return albums
 
-    def add(self, item: Album):
+    def add(self, item: Album, **kwargs):
         self.sp.current_user_saved_albums_add(albums=[item.id])
 
-    def remove(self, item: Album):
+    def remove(self, item: Album, **kwargs):
         self.sp.current_user_saved_albums_delete(albums=[item.id])
 
     def contains(self, item: Album):
@@ -171,10 +171,10 @@ class FollowedPlaylists(ItemCollection, Mutable):
             playlists.append(Playlist(self.sp, playlist["id"], info=playlist))
         return playlists
 
-    def add(self, item: Playlist):
+    def add(self, item: Playlist, **kwargs):
         self.sp.current_user_follow_playlist(playlist_id=item.id)
 
-    def remove(self, item: Playlist):
+    def remove(self, item: Playlist, **kwargs):
         self.sp.current_user_unfollow_playlist(playlist_id=item.id)
 
     def contains(self, item: Playlist):
@@ -214,10 +214,10 @@ class FollowedArtists(ItemCollection, Mutable):
             artists.append(Artist(self.sp, artist["id"], artist))
         return artists
 
-    def add(self, item: Artist):
+    def add(self, item: Artist, **kwargs):
         self.sp.user_follow_artists([item.id])
 
-    def remove(self, item: Artist):
+    def remove(self, item: Artist, **kwargs):
         self.sp.user_unfollow_artists([item.id])
 
     def contains(self, item: Artist):

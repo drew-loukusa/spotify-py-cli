@@ -142,12 +142,36 @@ class Playlist(Item, ItemCollection, Mutable):
         else:
             return False
 
-    def add(self, item: Item):
-        "item can be track or episode"
-        self.sp.playlist_add_items(self.id, [item.id])
+    def add(self, item: Item, **kwargs):
+        """
+        Add an item to the playlist. 
+        Item can be track or episode.
+        Optional, uses keyword arg 'position' to determine where to place added item.
+        If "position" is not given as a kwarg, default behavior is ... ? TODO findout default behavior
+        """
+        position = None if "position" not in kwargs else kwargs["position"]
+        self.sp.playlist_add_items(self.id, [item.id], position=position)
 
-    def remove(self, item: Item):
-        self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
+    def remove(self, item: Item, **kwargs):
+        """
+        Remove an item from the playlist. 
+        Item can be track or episode.
+        Optional:
+        * Keyword arg 'position'= [int, int, int...], a list of ints, determines which occurance of the item to remove .
+        * Keyword arg 'all'=True, will cause ALL occurances of a specific item to be removed 
+        """
+        position = None if "position" not in kwargs else kwargs["position"]
+        remove_all = None if "all" not in kwargs else kwargs["all"] 
+
+        if remove_all:
+            self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
+        else:
+            items = []
+            if position is not None:
+                items = [{"uri:":item.id, "positions": position}]
+                self.sp.playlist_remove_specific_occurrences_of_items(self.id, items)
+            else:
+                pass
 
 
 class Artist(Item):
@@ -197,7 +221,7 @@ class Album(Item, ItemCollection):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
     def items(self, limit=20, offset=0, retrieve_all=False):
-        raw_tracks = self._get_item(
+        raw_tracks = self._items(
             self.sp.album_tracks,
             album_id=self.id,
             limit=limit,
