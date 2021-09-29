@@ -631,6 +631,13 @@ class TestEdit:
         tracks = self._modify_tracks_test(action, args, init_tracks)
         assert len(tracks) == 1
 
+    def test_add_multiple_tracks(self):
+        init_tracks = [""]
+        new_tracks = ["3hgdCqTrU786DoKcqMGsA8", "55d553uqFMy1882OvdPPvV"]
+        action, args = "add", [*new_tracks]
+        tracks = self._modify_tracks_test(action, args, init_tracks)
+        assert len(tracks) == 1
+
     def test_remove_track(self):
         init_tracks = ["55d553uqFMy1882OvdPPvV", "3hgdCqTrU786DoKcqMGsA8"]
         target_track = "3hgdCqTrU786DoKcqMGsA8"
@@ -677,16 +684,33 @@ class TestEdit:
         assert tracks[0]["track"]["id"] == init_tracks[0]
         assert len(tracks) == 2
 
-    def test_remove_track_using_count(self):
+    def test_remove_multiple_tracks(self):
         init_tracks = [
             "3hgdCqTrU786DoKcqMGsA8",
             "55d553uqFMy1882OvdPPvV",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "1c5aqW0BsVBWEiLS22xYys"
+        ]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks]
+        tracks = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == init_tracks[1]
+        assert tracks[-1]["track"]["id"] == init_tracks[-2]
+        assert len(tracks) == 2
+
+    def test_remove_multiple_tracks_specific(self):
+        init_tracks = [
+            "1c5aqW0BsVBWEiLS22xYys",
+            "55d553uqFMy1882OvdPPvV",
             "3hgdCqTrU786DoKcqMGsA8",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "3hgdCqTrU786DoKcqMGsA8",
+            "1c5aqW0BsVBWEiLS22xYys",
             "3hgdCqTrU786DoKcqMGsA8",
         ]
-        target_track = "3hgdCqTrU786DoKcqMGsA8"
-        action, args = "remove", [target_track, "--count", 2]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks, "--specific" "2,4; 0"]
         tracks = self._modify_tracks_test(action, args, init_tracks)
-        assert tracks[-1]["track"]["id"] == init_tracks[-1]
         assert tracks[0]["track"]["id"] == init_tracks[1]
+        assert tracks[-1]["track"]["id"] == init_tracks[-2]
         assert len(tracks) == 2
