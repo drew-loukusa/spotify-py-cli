@@ -89,3 +89,39 @@ class Listing:
     listing = "Listing your saved/followed {}s:"
     params = "Limit: {}, Offset: {}"
     ret_all = "Retrieving all items..."
+
+class Edit:
+    help = "Edit a playlist you own, or are a collaborator on"
+    class Details:
+        name_help="Change the name of the playlist"
+        public_help="Change the public/private status of the playlist"
+        collab_help="Change whether the playlist is collaborative or not"
+        desc_help="Change the description of the playlist"
+    class Add:
+        track_ids_help = "Track ID, or list of space seperated track IDs to add to the playlist"
+        unique_help = "Only add track if it NOT already in the list (default behavior is FALSE; always add track)"
+        insert_at_help = """Insert before track before INDEX.
+Default is to add to the FRONT of the playlist, specify -1 to add to the back.
+For multiple tracks, takes a list of semi-colon and comma seperated values.
+See help text for '--specific' option on the remove command for list syntax."""
+    class Remove:
+        track_ids_help = "Track ID, or list of space seperated track IDs to add to the playlist"
+        all_help = "Remove all occurances of the track from the playlist"
+        specific_help = """Remove specific occurances of the track,
+argument to option should be comma seperated list of positions as a str"
+For multiple tracks, seperate track position lists with ';'
+Example: For tracks: TR1 TR2 TR3
+        A list like: "0,2; 3,4; 5,6" would match up TR1 to 0,2, TR2 to 3,4 ...
+
+NOTE:
+Command will left align the positions list to the track ids.
+Any track that doesn't get a position list, will fall back to
+simple removal of the first occurance.
+Example:
+        track ids: TR1 TR2 TR3      position list: "0,2; 5,6"
+        In this case, TR3 will fall back to simple first occurance removal.
+To skip an item in the track ids, just leave it blank
+Example: "0,2; ; 5,6"""
+        offset_help="""For walking, start at OFFSET (default is 0, front of list).
+If provided 2 args uses first ar as the start offset, and the second as the end offset"""
+        count_help = "How many occurances of track to remove from the playlist"

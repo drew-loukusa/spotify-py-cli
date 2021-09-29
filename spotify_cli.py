@@ -1,7 +1,7 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
-import collections
 import sys
+from typing import List, Tuple
 
 import typer
 
@@ -15,11 +15,13 @@ from app_strings import (
     Unfollow,
     Save,
     Unsave,
+    Edit,
 )
-
 
 spot = SpotipySpotifyFacade(output_object=typer.echo)
 app = typer.Typer()
+edit_app = typer.Typer()
+app.add_typer(edit_app, name="edit", help=Edit.help)
 
 
 @app.callback()
@@ -38,7 +40,7 @@ def create(
     force: bool = typer.Option(False, help=Create.force_help),
 ):
     """
-    Creates a new playlist.
+    Create a new playlist.
     """
 
     # Check if name is already in use
@@ -218,12 +220,15 @@ def search(
 @app.command(no_args_is_help=True)
 def list(
     item_type: str = typer.Argument(
-        ..., help="Item type of collection to list"
+        ..., help="Item type of collection to list. Supported types: playlist, album, track, artist, show, episode"
     ),
     limit: int = typer.Option(10, help="TODO: Add help"),
     offset: int = typer.Option(0, help="TODO: Add help"),
     retrieve_all: bool = typer.Option(False, help="TODO: Add help"),
 ):
+    """
+    List out items you have saved/followed.
+    """
     collection = spot.get_collection(item_type)
     if collection is None:
         typer.echo(f"Collection for type {item_type} does not exist")
@@ -239,6 +244,62 @@ def list(
     ):
         typer.echo(item)
 
+@edit_app.command(no_args_is_help=True)
+def add(
+    playlist_id: str = typer.Argument(
+        ..., help="ID of playlist to add tracks to"
+    ),
+    track_ids: List[str] = typer.Argument(
+        ...,
+        help=Edit.Add.track_ids_help,
+    ),
+    insert_at: List[str] = typer.Option(
+        "0", "--insert-at", "-i", help=Edit.Add.insert_at_help
+    ),
+    add_if_unique: bool = typer.Option(
+        False,
+        "--add-if-unique/--add-if-dupe",
+        "-u/-U",
+        help=Edit.Add.unique_help,
+    ),
+):
+    """
+    Add tracks to a playlist you own or are a collaborator on.
+    """
+    for track_id in track_ids:
+        print(track_id, end=" ")
+    # TODO: Implement this
+
+@edit_app.command(no_args_is_help=True)
+def remove(
+    playlist_id: str = typer.Argument(
+        ..., help="ID of playlist to add tracks to"
+    ),
+    track_ids: List[str] = typer.Argument(
+        ...,
+        help=Edit.Remove.track_ids_help,
+    ),
+    all: bool = typer.Option(False, "--all", "-a", help=Edit.Remove.all_help),
+    specific: str = typer.Option("", "--specific", "-s", help=Edit.Remove.specific_help),
+    offset: Tuple[int, int] = typer.Option((0, None), "--offset", "-o", help=Edit.Remove.offset_help),
+    count: int = typer.Option(1, "--count", "-c", help=Edit.Remove.count_help)
+):
+    """
+    Remove tracks from a playlist you own, or are a collaborator on
+    """
+    pass
+
+@edit_app.command(no_args_is_help=True)
+def details(
+    name: str = typer.Option(None, "--name", "-n", help=Edit.Details.name_help),
+    public: bool = typer.Option(None, "--public", "-P", help=Edit.Details.public_help),
+    collaborative: bool = typer.Option(None, "--collaborative", "-c", help=Edit.Details.collab_help),
+    description: str = typer.Option(None, "--description", "-d", help=Edit.Details.desc_help)
+):
+    """
+    Modify the details of playlist you own, or you that you are a collaborator on
+    """
+    pass
 
 if __name__ == "__main__":
     app()
