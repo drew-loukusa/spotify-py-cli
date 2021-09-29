@@ -205,6 +205,35 @@ class DummySpotipy:
 
         return self.select_item("playlist", playlist_id, extern=1)
 
+    def playlist_add_items(self, playlist_id, items, position=None):
+        playlist = self.select_item("playlist", playlist_id, extern=0)
+
+        if "tracks" not in playlist:
+            playlist["tracks"] = {"items": []}
+        elif "items" not in playlist["tracks"]:
+            playlist["tracks"]["items"] = []
+        for item in items:
+            position = (
+                len(playlist["tracks"]["items"])
+                if position is None
+                else position
+            )
+            playlist["tracks"]["items"].insert(
+                position,
+                {"track": {"id": item, "name": f"track_{self.pl_id_count}"}},
+            )
+
+    def playlist_tracks(
+        self,
+        playlist_id,
+        fields=None,
+        limit=100,
+        offset=0,
+        market=None,
+        additional_types=("track",),
+    ):
+        return self.select_item("playlist", playlist_id, extern=0)["tracks"]
+
     # ============================== Albums ===================================#
     def album(self, album_id):
         return self.select_item("album", album_id, extern=1)

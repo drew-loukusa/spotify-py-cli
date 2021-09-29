@@ -142,34 +142,47 @@ class Playlist(Item, ItemCollection, Mutable):
         else:
             return False
 
+    def change_details(
+        self, name=None, public=None, collaborative=None, description=None
+    ):
+        self.sp.playlist_change_details(
+            self.id,
+            name=name,
+            public=public,
+            collaborative=collaborative,
+            description=description,
+        )
+
     def add(self, item: Item, **kwargs):
         """
-        Add an item to the playlist. 
+        Add an item to the playlist.
         Item can be track or episode.
         Optional, uses keyword arg 'position' to determine where to place added item.
-        If "position" is not given as a kwarg, default behavior is ... ? TODO findout default behavior
+        If "position" is not given as a kwarg, default behavior is to add to the END of the playlist.
         """
         position = None if "position" not in kwargs else kwargs["position"]
         self.sp.playlist_add_items(self.id, [item.id], position=position)
 
     def remove(self, item: Item, **kwargs):
         """
-        Remove an item from the playlist. 
+        Remove an item from the playlist.
         Item can be track or episode.
         Optional:
         * Keyword arg 'position'= [int, int, int...], a list of ints, determines which occurance of the item to remove .
-        * Keyword arg 'all'=True, will cause ALL occurances of a specific item to be removed 
+        * Keyword arg 'all'=True, will cause ALL occurances of a specific item to be removed
         """
         position = None if "position" not in kwargs else kwargs["position"]
-        remove_all = None if "all" not in kwargs else kwargs["all"] 
+        remove_all = None if "all" not in kwargs else kwargs["all"]
 
         if remove_all:
             self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
         else:
             items = []
             if position is not None:
-                items = [{"uri:":item.id, "positions": position}]
-                self.sp.playlist_remove_specific_occurrences_of_items(self.id, items)
+                items = [{"uri:": item.id, "positions": position}]
+                self.sp.playlist_remove_specific_occurrences_of_items(
+                    self.id, items
+                )
             else:
                 pass
 
