@@ -61,10 +61,18 @@ class SpotipySpotifyFacade:
         }
         self.output = output_object
 
-    def get_item(self, item_type, item_id):
+    def get_item(self, item_type: str, item_id: str) -> Item:
+        """
+        Returns an Item given item_type and item_id.
+        See self.types for list of supported 'item_type's
+        """
         return self.types[item_type]["item"](self.sp, item_id)
 
-    def get_collection(self, item_type):
+    def get_collection(self, item_type: str) -> ItemCollection:
+        """
+        Returns an ItemCollection given item_type and item_id.
+        See self.types for list of supported 'item_type's
+        """
         i_type = self.types[item_type]
         if "collection" in i_type:
             return i_type["collection"](self.sp)

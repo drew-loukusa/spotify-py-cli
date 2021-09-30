@@ -4,7 +4,7 @@ This module contains item classes used for managing Spotify items.
 
 import textwrap
 
-from typing import List
+from typing import Collection, List
 from spotipy import Spotify
 
 from interfaces import Item, ItemCollection, Mutable
@@ -117,7 +117,7 @@ class Playlist(Item, ItemCollection, Mutable):
         return "\n".join(pl_str)
 
     # Playlist implements ItemCollection since it "holds" a collection of tracks
-    def items(self, limit=20, offset=0, retrieve_all=False):
+    def items(self, limit=20, offset=0, retrieve_all=False) -> List[Track]:
         raw_tracks = self._items(
             self.sp.playlist_tracks,
             playlist_id=self.id,
@@ -168,23 +168,42 @@ class Playlist(Item, ItemCollection, Mutable):
         Remove an item from the playlist.
         Item can be track or episode.
         Optional:
-        * Keyword arg 'position'= [int, int, int...], a list of ints, determines which occurance of the item to remove .
+        * Keyword arg 'positions'= [int, int, int...], a list of ints, determines which occurance of the item to remove .
         * Keyword arg 'all'=True, will cause ALL occurances of a specific item to be removed
         """
-        position = None if "position" not in kwargs else kwargs["position"]
-        remove_all = None if "all" not in kwargs else kwargs["all"]
+        config = lambda key, default: default if key not in kwargs else kwargs[key]
+        positions = config("positions", None)
+        remove_all = config("all", None)
+        count = config("count", 1)
+        offset = config("offset", (0, None))
+
+        # TODO: Add THIRD mode of removal: 
+        #       Walk through list, remove FIRST OCCURANCE and up to N occurances
+        #       Basically, add kwarg support for the shit in remove in the cli
+        #       Default behavior of just passing item ID should remove the FIRST instance of said item
+
 
         if remove_all:
             self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
+        elif positions is not None:
+            items = [{"uri": item.id, "positions": positions}]
+            self.sp.playlist_remove_specific_occurrences_of_items(
+                self.id, items
+            )
         else:
-            items = []
-            if position is not None:
-                items = [{"uri:": item.id, "positions": position}]
-                self.sp.playlist_remove_specific_occurrences_of_items(
-                    self.id, items
-                )
-            else:
-                pass
+            items = self.items(retrieve_all=True)
+            start, end = offset
+            end = end if end not in {-1, None} else len(items)
+            for index, cur_item in enumerate(items[start:end]):
+                if count == 0: 
+                    break 
+                if item.id == cur_item.id:
+                    items = [{"uri": item.id, "positions": [index + start]}]
+                    self.sp.playlist_remove_specific_occurrences_of_items(
+                        self.id, items
+                    )
+                    count -= 1
+            
 
 
 class Artist(Item):

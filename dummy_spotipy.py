@@ -2,7 +2,7 @@
 This module contains a dummy wrapper used for local testing. 
 The dummy wrapper emulates some behavior of the spotipy Spotify API wrapper.
 """
-from items import Show
+from items import Show, Track
 from typing import List
 
 
@@ -218,10 +218,14 @@ class DummySpotipy:
                 if position is None
                 else position
             )
-            playlist["tracks"]["items"].insert(
-                position,
-                {"track": {"id": item, "name": f"track_{self.pl_id_count}"}},
-            )
+            track = {"track": {"id": item, "name": f"track_{self.pl_id_count}"}}
+            if position != -1:
+                playlist["tracks"]["items"].insert(
+                    position,
+                    track
+                )
+            else:
+                playlist["tracks"]["items"].append(track)
 
     def playlist_tracks(
         self,
@@ -232,7 +236,36 @@ class DummySpotipy:
         market=None,
         additional_types=("track",),
     ):
-        return self.select_item("playlist", playlist_id, extern=0)["tracks"]
+        tracks = self.select_item("playlist", playlist_id, extern=0)["tracks"]
+        tracks.update({"next": None})
+        return tracks
+
+    def playlist_remove_all_occurrences_of_items(self, playlist_id, items):
+        playlist = self.select_item("playlist", playlist_id)
+        tracks = playlist["tracks"]["items"]
+        for item_id in items: 
+            count = 0          
+            for i, track in enumerate(tracks):
+                if track["track"]["id"] == item_id:
+                    tracks[i] = "REMOVE"
+                    count += 1
+            for _ in range(count):
+                tracks.remove("REMOVE")
+               
+
+    def playlist_remove_specific_occurrences_of_items(self, playlist_id, items):
+        playlist = self.select_item("playlist", playlist_id)
+        tracks = playlist["tracks"]["items"]
+        for item in items:
+            item_id, positions = item["uri"], item["positions"]
+            count = 0
+            for pos in positions:
+                track = tracks[pos]
+                if track["track"]["id"] == item_id:
+                    tracks[pos] = "REMOVE"
+                    count += 1
+            for _ in range(count):
+                tracks.remove("REMOVE")
 
     # ============================== Albums ===================================#
     def album(self, album_id):

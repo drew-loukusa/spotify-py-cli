@@ -90,20 +90,25 @@ class Listing:
     params = "Limit: {}, Offset: {}"
     ret_all = "Retrieving all items..."
 
+
 class Edit:
     help = "Edit a playlist you own, or are a collaborator on"
+
     class Details:
-        name_help="Change the name of the playlist"
-        public_help="Change the public/private status of the playlist"
-        collab_help="Change whether the playlist is collaborative or not"
-        desc_help="Change the description of the playlist"
+        name_help = "Change the name of the playlist"
+        public_help = "Change the public/private status of the playlist"
+        collab_help = "Change whether the playlist is collaborative or not"
+        desc_help = "Change the description of the playlist"
+
     class Add:
         track_ids_help = "Track ID, or list of space seperated track IDs to add to the playlist"
         unique_help = "Only add track if it NOT already in the list (default behavior is FALSE; always add track)"
         insert_at_help = """Insert before track before INDEX.
-Default is to add to the FRONT of the playlist, specify -1 to add to the back.
+Default is to add to the BACK/END of the playlist, specify 0 to add to the front.
 For multiple tracks, takes a list of semi-colon and comma seperated values.
 See help text for '--specific' option on the remove command for list syntax."""
+        not_unique = "Track not added as it already exists in the playlist and option '--add-if-unique' was used."
+
     class Remove:
         track_ids_help = "Track ID, or list of space seperated track IDs to add to the playlist"
         all_help = "Remove all occurances of the track from the playlist"
@@ -118,10 +123,13 @@ Command will left align the positions list to the track ids.
 Any track that doesn't get a position list, will fall back to
 simple removal of the first occurance.
 Example:
-        track ids: TR1 TR2 TR3      position list: "0,2; 5,6"
-        In this case, TR3 will fall back to simple first occurance removal.
+        track ids: TR1 TR2 TR3
+        position list: "0,2; 5,6"
+    In this case, TR3 will fall back to simple first occurance removal.
 To skip an item in the track ids, just leave it blank
-Example: "0,2; ; 5,6"""
-        offset_help="""For walking, start at OFFSET (default is 0, front of list).
-If provided 2 args uses first ar as the start offset, and the second as the end offset"""
+Example: \"0,2; ; 5,6\""""
+        offset_help = """For walking, start at the first INT, end at the second INT.
+Providing -1 as the second int tells it to walk to the end of the list.
+By default it walks from the start (0) to the end (-1)
+        """
         count_help = "How many occurances of track to remove from the playlist"

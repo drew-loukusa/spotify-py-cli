@@ -2,6 +2,7 @@
 
 import sys
 from typing import List, Tuple
+from itertools import zip_longest
 
 import typer
 
@@ -220,7 +221,8 @@ def search(
 @app.command(no_args_is_help=True)
 def list(
     item_type: str = typer.Argument(
-        ..., help="Item type of collection to list. Supported types: playlist, album, track, artist, show, episode"
+        ...,
+        help="Item type of collection to list. Supported types: playlist, album, track, artist, show, episode",
     ),
     limit: int = typer.Option(10, help="TODO: Add help"),
     offset: int = typer.Option(0, help="TODO: Add help"),
@@ -244,6 +246,7 @@ def list(
     ):
         typer.echo(item)
 
+
 @edit_app.command(no_args_is_help=True)
 def add(
     playlist_id: str = typer.Argument(
@@ -253,8 +256,8 @@ def add(
         ...,
         help=Edit.Add.track_ids_help,
     ),
-    insert_at: List[str] = typer.Option(
-        "0", "--insert-at", "-i", help=Edit.Add.insert_at_help
+    insert_at: str = typer.Option(
+        None, "--insert-at", "-i", help=Edit.Add.insert_at_help
     ),
     add_if_unique: bool = typer.Option(
         False,
@@ -266,9 +269,22 @@ def add(
     """
     Add tracks to a playlist you own or are a collaborator on.
     """
-    for track_id in track_ids:
-        print(track_id, end=" ")
-    # TODO: Implement this
+    collection = spot.get_item("playlist", playlist_id)
+
+    if insert_at is None:
+        insert_at = [[None]]*len(track_ids)
+    else:
+        insert_at = [ [int(n) for n in tk.split(",")] for tk in insert_at.rstrip().split(";")]
+
+    for track_id, index_list in zip_longest(track_ids, insert_at, fillvalue=[None]): 
+        item = spot.get_item("track", track_id)
+        if add_if_unique and collection.contains(item):
+            typer.echo(Edit.Add.not_unique)
+            continue 
+        
+        for index in index_list:
+            position = index
+            collection.add(item, position=position)
 
 @edit_app.command(no_args_is_help=True)
 def remove(
@@ -280,26 +296,46 @@ def remove(
         help=Edit.Remove.track_ids_help,
     ),
     all: bool = typer.Option(False, "--all", "-a", help=Edit.Remove.all_help),
-    specific: str = typer.Option("", "--specific", "-s", help=Edit.Remove.specific_help),
-    offset: Tuple[int, int] = typer.Option((0, None), "--offset", "-o", help=Edit.Remove.offset_help),
-    count: int = typer.Option(1, "--count", "-c", help=Edit.Remove.count_help)
+    specific: str = typer.Option(
+        None, "--specific", "-s", help=Edit.Remove.specific_help
+    ),
+    offset: Tuple[int, int] = typer.Option(
+        (0, -1), "--offset", "-o", help=Edit.Remove.offset_help
+    ),
+    count: int = typer.Option(1, "--count", "-c", help=Edit.Remove.count_help),
 ):
     """
     Remove tracks from a playlist you own, or are a collaborator on
     """
-    pass
+    collection = spot.get_item("playlist", playlist_id)
+
+    if specific is None:
+        specific = []
+    else:
+        specific = [ [int(n) for n in tk.split(",")] for tk in specific.rstrip().split(";")]
+
+    for track_id, positions in zip_longest(track_ids, specific, fillvalue=None): 
+        item = spot.get_item("track", track_id)
+        collection.remove(item, positions=positions, all=all, offset=offset, count=count)
 
 @edit_app.command(no_args_is_help=True)
 def details(
     name: str = typer.Option(None, "--name", "-n", help=Edit.Details.name_help),
-    public: bool = typer.Option(None, "--public", "-P", help=Edit.Details.public_help),
-    collaborative: bool = typer.Option(None, "--collaborative", "-c", help=Edit.Details.collab_help),
-    description: str = typer.Option(None, "--description", "-d", help=Edit.Details.desc_help)
+    public: bool = typer.Option(
+        None, "--public", "-P", help=Edit.Details.public_help
+    ),
+    collaborative: bool = typer.Option(
+        None, "--collaborative", "-c", help=Edit.Details.collab_help
+    ),
+    description: str = typer.Option(
+        None, "--description", "-d", help=Edit.Details.desc_help
+    ),
 ):
     """
     Modify the details of playlist you own, or you that you are a collaborator on
     """
     pass
+
 
 if __name__ == "__main__":
     app()

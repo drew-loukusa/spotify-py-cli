@@ -19,6 +19,7 @@ from user_libary import (
     SavedTracks,
 )
 from app_strings import (
+    Edit,
     General,
     Create,
     Listing,
@@ -593,13 +594,15 @@ class TestEdit:
         assert info["public"] == True
         assert info["collaborative"] == True
 
-    def _modify_tracks_test(self, args, initial_tracks):
+    def _modify_tracks_test(self, action, args, initial_tracks):
         item_id = spot.create_playlist(name="TEST_PLAYLIST_ADD_REMOVE")
-        args[2] = item_id
         item = Playlist(spot.sp, item_id)
         collection = FollowedPlaylists(spot.sp)
 
-        spot.sp.playlist_add_items(item_id, initial_tracks)
+        spot.sp.playlist_add_items(item_id, initial_tracks, position=-1)
+
+        args = ["edit", action, item_id, *args]
+
         result = runner.invoke(app, args=args)
 
         tracks = spot.sp.playlist_tracks(item_id)["items"]
@@ -608,41 +611,44 @@ class TestEdit:
         collection.remove(item)
 
         assert result.exit_code == 0
-        return tracks
+        return tracks, result
 
     def test_add_track(self):
         init_tracks = ["55d553uqFMy1882OvdPPvV"]
         new_track = "3hgdCqTrU786DoKcqMGsA8"
-        args = ["edit", "add", None, new_track]
-        tracks = self._modify_tracks_test(args=args, initial_tracks=init_tracks)
+        action, args = "add", [new_track]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+
         assert tracks[-1]["track"]["id"] == new_track
 
     def test_add_track_with_position(self):
         init_tracks = ["55d553uqFMy1882OvdPPvV"]
         new_track = "3hgdCqTrU786DoKcqMGsA8"
-        args = ["edit", "add", None, new_track, "--insert-at", 0]
-        tracks = self._modify_tracks_test(args=args, initial_tracks=init_tracks)
+        action, args = "add", [new_track, "--insert-at", "0"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[0]["track"]["id"] == new_track
 
     def test_add_track_no_dupe(self):
         init_tracks = ["3hgdCqTrU786DoKcqMGsA8"]
         new_track = "3hgdCqTrU786DoKcqMGsA8"
         action, args = "add", [new_track, "--add-if-unique"]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        tracks, result = self._modify_tracks_test(action, args, init_tracks)
         assert len(tracks) == 1
+        assert Edit.Add.not_unique in result.stdout
 
     def test_add_multiple_tracks(self):
-        init_tracks = [""]
+        init_tracks = []
         new_tracks = ["3hgdCqTrU786DoKcqMGsA8", "55d553uqFMy1882OvdPPvV"]
         action, args = "add", [*new_tracks]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
-        assert len(tracks) == 1
+        tracks, result = self._modify_tracks_test(action, args, init_tracks)
+        assert len(tracks) == 2
+        #assert "Tracks succesfully added!" in result.stdout
 
     def test_remove_track(self):
         init_tracks = ["55d553uqFMy1882OvdPPvV", "3hgdCqTrU786DoKcqMGsA8"]
         target_track = "3hgdCqTrU786DoKcqMGsA8"
         action, args = "remove", [target_track]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
 
     def test_remove_track_all(self):
@@ -653,7 +659,7 @@ class TestEdit:
         ]
         target_track = "3hgdCqTrU786DoKcqMGsA8"
         action, args = "remove", [target_track, "--all"]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
         assert tracks[0]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
         assert len(tracks) == 1
@@ -665,8 +671,8 @@ class TestEdit:
             "3hgdCqTrU786DoKcqMGsA8",
         ]
         target_track = "3hgdCqTrU786DoKcqMGsA8"
-        action, args = "remove", [target_track, "--specific" "0,2"]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        action, args = "remove", [target_track, "--specific", "0,2"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
         assert tracks[0]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
         assert len(tracks) == 1
@@ -678,8 +684,8 @@ class TestEdit:
             "3hgdCqTrU786DoKcqMGsA8",
         ]
         target_track = "3hgdCqTrU786DoKcqMGsA8"
-        action, args = "remove", [target_track, "--offset", 1]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        action, args = "remove", [target_track, "--offset", 1, -1]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[-1]["track"]["id"] == init_tracks[1]
         assert tracks[0]["track"]["id"] == init_tracks[0]
         assert len(tracks) == 2
@@ -689,11 +695,11 @@ class TestEdit:
             "3hgdCqTrU786DoKcqMGsA8",
             "55d553uqFMy1882OvdPPvV",
             "6eXViRiXJKufjfzY3Ntxhx",
-            "1c5aqW0BsVBWEiLS22xYys"
+            "1c5aqW0BsVBWEiLS22xYys",
         ]
         target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
         action, args = "remove", [*target_tracks]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[0]["track"]["id"] == init_tracks[1]
         assert tracks[-1]["track"]["id"] == init_tracks[-2]
         assert len(tracks) == 2
@@ -709,8 +715,8 @@ class TestEdit:
             "3hgdCqTrU786DoKcqMGsA8",
         ]
         target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
-        action, args = "remove", [*target_tracks, "--specific" "2,4; 0"]
-        tracks = self._modify_tracks_test(action, args, init_tracks)
+        action, args = "remove", [*target_tracks, "--specific", "2,4; 0"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
         assert tracks[0]["track"]["id"] == init_tracks[1]
-        assert tracks[-1]["track"]["id"] == init_tracks[-2]
-        assert len(tracks) == 2
+        assert tracks[-1]["track"]["id"] == init_tracks[-1]
+        assert len(tracks) == 4
