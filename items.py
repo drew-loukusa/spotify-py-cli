@@ -3,8 +3,9 @@ This module contains item classes used for managing Spotify items.
 """
 
 import textwrap
+from itertools import zip_longest
 
-from typing import Collection, List
+from typing import Collection, Counter, List
 from spotipy import Spotify
 
 from interfaces import Item, ItemCollection, Mutable
@@ -163,7 +164,7 @@ class Playlist(Item, ItemCollection, Mutable):
         position = None if "position" not in kwargs else kwargs["position"]
         self.sp.playlist_add_items(self.id, [item.id], position=position)
 
-    def remove(self, item: Item, **kwargs):
+    def remove(self, items: List[Item], **kwargs):
         """
         Remove an item from the playlist.
         Item can be track or episode.
@@ -181,30 +182,52 @@ class Playlist(Item, ItemCollection, Mutable):
         #       Walk through list, remove FIRST OCCURANCE and up to N occurances
         #       Basically, add kwarg support for the shit in remove in the cli
         #       Default behavior of just passing item ID should remove the FIRST instance of said item
-
-
+        item_ids = [ item.id for item in items ]
+        
         if remove_all:
-            self.sp.playlist_remove_all_occurrences_of_items(self.id, [item.id])
-        elif positions is not None:
-            items = [{"uri": item.id, "positions": positions}]
-            self.sp.playlist_remove_specific_occurrences_of_items(
-                self.id, items
-            )
-        else:
-            items = self.items(retrieve_all=True)
-            start, end = offset
-            end = end if end not in {-1, None} else len(items)
-            for index, cur_item in enumerate(items[start:end]):
-                if count == 0: 
-                    break 
-                if item.id == cur_item.id:
-                    items = [{"uri": item.id, "positions": [index + start]}]
-                    self.sp.playlist_remove_specific_occurrences_of_items(
-                        self.id, items
-                    )
-                    count -= 1
-            
+            self.sp.playlist_remove_all_occurrences_of_items(self.id, item_ids)
+        
+        specfic_items = []
+        normal_items = dict()
 
+        # Associate positions lists, if specified, to track ids
+        for item, position_list in zip_longest(items, positions, fillvalue=None): 
+           
+            # Pos lit can be None, or can be empty if a track was skipped with '...'
+            if position_list is not None and len(position_list) > 0:
+                specfic_items.append({"uri": item.id, "positions": position_list})
+            else:
+                normal_items[item.id] = count
+        
+        # Make inital call to handle specific positon specified tracks
+        if len(specfic_items) > 0:
+            self.sp.playlist_remove_specific_occurrences_of_items(
+                self.id, specfic_items
+            )
+
+        # Then locate and remove tracks that did not have specific position lists
+        # This is also how tracks are normally handeled when a user does not provide a list of position lists
+        items = self.items(retrieve_all=True)        
+        start, end = offset
+        end = end if end not in {-1, None} else len(items)
+        target_items = []
+
+        # Walk the playlist from 'start' to 'end'
+        for index, cur_item in enumerate(items[start:end]):
+            if count == 0: 
+                break 
+
+            # Check each item to see if it's one we want to remove
+            if cur_item.id in normal_items:
+                # If we've already "removed" 'count' occurances of said item, skip this occurance
+                if normal_items[cur_item.id] <= 0:
+                    continue 
+                target_items.append({"uri": cur_item.id, "positions": [index + start]})
+                normal_items[cur_item.id] -= 1
+
+        self.sp.playlist_remove_specific_occurrences_of_items(
+            self.id, target_items
+        )
 
 class Artist(Item):
     """

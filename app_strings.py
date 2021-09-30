@@ -111,7 +111,7 @@ See help text for '--specific' option on the remove command for list syntax."""
 
     class Remove:
         track_ids_help = "Track ID, or list of space seperated track IDs to add to the playlist"
-        all_help = "Remove all occurances of the track from the playlist"
+        all_help = """Remove all occurances of the track from the playlist. NOTE: This option will override '--count' and '--specfic'"""
         specific_help = """Remove specific occurances of the track,
 argument to option should be comma seperated list of positions as a str"
 For multiple tracks, seperate track position lists with ';'
@@ -122,14 +122,14 @@ NOTE:
 Command will left align the positions list to the track ids.
 Any track that doesn't get a position list, will fall back to
 simple removal of the first occurance.
-Example:
-        track ids: TR1 TR2 TR3
-        position list: "0,2; 5,6"
-    In this case, TR3 will fall back to simple first occurance removal.
-To skip an item in the track ids, just leave it blank
-Example: \"0,2; ; 5,6\""""
+Example: track ids: TR1 TR2 TR3, position list: "0,2; 5,6"
+In this case, TR3 will fall back to simple first occurance removal.
+To skip an item in the track ids, use an ellipse. Example: \"0,2; ... ; 5,6\"
+
+NOTE: If you specify a count with '--count', any tracks that have position lists will ignore said count.
+"""
         offset_help = """For walking, start at the first INT, end at the second INT.
 Providing -1 as the second int tells it to walk to the end of the list.
 By default it walks from the start (0) to the end (-1)
         """
-        count_help = "How many occurances of track to remove from the playlist"
+        count_help = "How many occurances of track to remove from the playlist. Can be overridden by '--specific' or '--all'"

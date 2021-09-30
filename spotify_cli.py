@@ -272,19 +272,25 @@ def add(
     collection = spot.get_item("playlist", playlist_id)
 
     if insert_at is None:
-        insert_at = [[None]]*len(track_ids)
+        insert_at = [[None]] * len(track_ids)
     else:
-        insert_at = [ [int(n) for n in tk.split(",")] for tk in insert_at.rstrip().split(";")]
+        insert_at = [
+            [int(n) for n in tk.split(",")]
+            for tk in insert_at.rstrip().split(";")
+        ]
 
-    for track_id, index_list in zip_longest(track_ids, insert_at, fillvalue=[None]): 
+    for track_id, index_list in zip_longest(
+        track_ids, insert_at, fillvalue=[None]
+    ):
         item = spot.get_item("track", track_id)
         if add_if_unique and collection.contains(item):
             typer.echo(Edit.Add.not_unique)
-            continue 
-        
+            continue
+
         for index in index_list:
             position = index
             collection.add(item, position=position)
+
 
 @edit_app.command(no_args_is_help=True)
 def remove(
@@ -312,11 +318,16 @@ def remove(
     if specific is None:
         specific = []
     else:
-        specific = [ [int(n) for n in tk.split(",")] for tk in specific.rstrip().split(";")]
+        specific = [
+            [int(n) for n in tk.split(",") if tk.strip() != "..."]
+            for tk in specific.rstrip().split(";")
+        ]
 
-    for track_id, positions in zip_longest(track_ids, specific, fillvalue=None): 
-        item = spot.get_item("track", track_id)
-        collection.remove(item, positions=positions, all=all, offset=offset, count=count)
+    items = [spot.get_item("track", track_id) for track_id in track_ids]
+    collection.remove(
+        items, positions=specific, all=all, offset=offset, count=count
+    )
+
 
 @edit_app.command(no_args_is_help=True)
 def details(

@@ -704,6 +704,22 @@ class TestEdit:
         assert tracks[-1]["track"]["id"] == init_tracks[-2]
         assert len(tracks) == 2
 
+    def test_remove_multiple_tracks_with_dupes(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "1c5aqW0BsVBWEiLS22xYys",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "1c5aqW0BsVBWEiLS22xYys",
+        ]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == init_tracks[2]
+        assert tracks[-1]["track"]["id"] == init_tracks[-1]
+        assert len(tracks) == 4
+
     def test_remove_multiple_tracks_specific(self):
         init_tracks = [
             "1c5aqW0BsVBWEiLS22xYys",
