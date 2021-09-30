@@ -213,17 +213,9 @@ class DummySpotipy:
         elif "items" not in playlist["tracks"]:
             playlist["tracks"]["items"] = []
         for item in items:
-            position = (
-                len(playlist["tracks"]["items"])
-                if position is None
-                else position
-            )
             track = {"track": {"id": item, "name": f"track_{self.pl_id_count}"}}
-            if position != -1:
-                playlist["tracks"]["items"].insert(
-                    position,
-                    track
-                )
+            if position is not None:
+                playlist["tracks"]["items"].insert(position, track)
             else:
                 playlist["tracks"]["items"].append(track)
 
@@ -243,15 +235,14 @@ class DummySpotipy:
     def playlist_remove_all_occurrences_of_items(self, playlist_id, items):
         playlist = self.select_item("playlist", playlist_id)
         tracks = playlist["tracks"]["items"]
-        for item_id in items: 
-            count = 0          
+        for item_id in items:
+            count = 0
             for i, track in enumerate(tracks):
                 if track["track"]["id"] == item_id:
                     tracks[i] = "REMOVE"
                     count += 1
             for _ in range(count):
                 tracks.remove("REMOVE")
-               
 
     def playlist_remove_specific_occurrences_of_items(self, playlist_id, items):
         playlist = self.select_item("playlist", playlist_id)
@@ -266,6 +257,24 @@ class DummySpotipy:
                     count += 1
         for _ in range(count):
             tracks.remove("REMOVE")
+
+    def playlist_change_details(
+        self,
+        playlist_id,
+        name=None,
+        public=None,
+        collaborative=None,
+        description=None,
+    ):
+        playlist = self.select_item("playlist", playlist_id)
+        if name is not None:
+            playlist["name"] = name
+        if public is not None:
+            playlist["public"] = public
+        if collaborative is not None:
+            playlist["collaborative"] = collaborative
+        if description is not None:
+            playlist["description"] = description
 
     # ============================== Albums ===================================#
     def album(self, album_id):

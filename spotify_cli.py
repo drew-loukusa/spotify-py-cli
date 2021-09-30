@@ -331,6 +331,7 @@ def remove(
 
 @edit_app.command(no_args_is_help=True)
 def details(
+    playlist_id: str = typer.Argument(..., help="ID of playlist to edit"),
     name: str = typer.Option(None, "--name", "-n", help=Edit.Details.name_help),
     public: bool = typer.Option(
         None, "--public", "-P", help=Edit.Details.public_help
@@ -345,7 +346,13 @@ def details(
     """
     Modify the details of playlist you own, or you that you are a collaborator on
     """
-    pass
+    playlist = spot.get_item("playlist", playlist_id)
+    playlist.change_details(
+        name=name,
+        public=public,
+        collaborative=collaborative,
+        description=description,
+    )
 
 
 if __name__ == "__main__":

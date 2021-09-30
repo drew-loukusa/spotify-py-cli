@@ -1,7 +1,5 @@
-import collections
-from os import name
 import re
-from typing import List, Literal
+from typing import List
 
 from typer.testing import CliRunner
 
@@ -581,11 +579,12 @@ class TestEdit:
 
         args = ["edit", "details", item_id, "--name", new_name]
         args += ["--description", new_desc]
-        args += ["--public", True]
-        args += ["--collaborative", True]
+        args += ["--public"]
+        args += ["--collaborative"]
         result = runner.invoke(app, args=args)
 
         updated_pl = spot.get_item("playlist", item_id)
+        spot.get_collection("playlist").remove(Playlist(spot.sp, item_id))
 
         info = updated_pl.info
         assert result.exit_code == 0
@@ -599,11 +598,17 @@ class TestEdit:
         item = Playlist(spot.sp, item_id)
         collection = FollowedPlaylists(spot.sp)
 
-        spot.sp.playlist_add_items(item_id, initial_tracks, position=-1)
+        if len(initial_tracks) > 0:
+            spot.sp.playlist_add_items(
+                item_id, initial_tracks
+            )  # , position=-1)
 
         args = ["edit", action, item_id, *args]
 
-        result = runner.invoke(app, args=args)
+        try:
+            result = runner.invoke(app, args=args)
+        except Exception as e:
+            print(e)
 
         tracks = spot.sp.playlist_tracks(item_id)["items"]
 
@@ -642,7 +647,7 @@ class TestEdit:
         action, args = "add", [*new_tracks]
         tracks, result = self._modify_tracks_test(action, args, init_tracks)
         assert len(tracks) == 2
-        #assert "Tracks succesfully added!" in result.stdout
+        # assert "Tracks succesfully added!" in result.stdout
 
     def test_remove_track(self):
         init_tracks = ["55d553uqFMy1882OvdPPvV", "3hgdCqTrU786DoKcqMGsA8"]
