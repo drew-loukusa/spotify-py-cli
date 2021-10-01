@@ -25,7 +25,13 @@ class Episode(Item):
         return f"<Episode: name: {self.name}, id: {self.id}>"
 
     def __str__(self) -> str:
-        return f"<Episode: name: {self.name}, id: {self.id}>"
+        name = self.info["name"]
+        show = self.info["show"]["name"]
+        description = textwrap.shorten(self.info["description"], width=500)
+        rel_date = self.info["release_date"]
+        url = self.info["external_urls"]["spotify"]
+        item_id = self.info["id"]
+        return f"Episode Name: {name}\nShow: {show}\nDescription: {description}\nRelease Date: {rel_date}\nURL: {url}\nID: {item_id}"
 
 
 class Track(Item):
@@ -42,7 +48,12 @@ class Track(Item):
         return f"<Track: name: {self.name}, id: {self.id}>"
 
     def __str__(self) -> str:
-        return f"<Track: name: {self.name}, id: {self.id}>"
+        name = self.info["name"]
+        tr_id = self.info["id"]
+        album = self.info["album"]["name"]
+        artists = [item["name"] for item in self.info["artists"]]
+        url = self.info["external_urls"]["spotify"]
+        return f"Track Name: {name}\nAlbum: {album}\nArtist(s): {artists}\nURL: {url}\nID: {tr_id}"
 
 
 class Show(Item, ItemCollection):
@@ -59,7 +70,13 @@ class Show(Item, ItemCollection):
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
     def __str__(self):
-        return f"<{self.type}: name: {self.name}, id: {self.id}>"
+        name = self.info["name"]
+        publisher = self.info["publisher"]
+        description = self.info["description"].rstrip()
+        episode_count = self.info["total_episodes"]
+        url = self.info["external_urls"]["spotify"]
+        item_id = self.info["id"]
+        return f"Show Name: {name}\nPublisher: {publisher}\nDescription: {description}\nEpisode Count: {episode_count}\nURL: {url}\nID: {item_id}"
 
     def items(self, limit=20, offset=0, retrieve_all=False):
         raw_episodes = self._items(
@@ -172,33 +189,39 @@ class Playlist(Item, ItemCollection, Mutable):
         * Keyword arg 'positions'= [int, int, int...], a list of ints, determines which occurance of the item to remove .
         * Keyword arg 'all'=True, will cause ALL occurances of a specific item to be removed
         """
-        config = lambda key, default: default if key not in kwargs else kwargs[key]
+        config = (
+            lambda key, default: default if key not in kwargs else kwargs[key]
+        )
         positions = config("positions", None)
         remove_all = config("all", None)
         count = config("count", 1)
         offset = config("offset", (0, None))
 
-        # TODO: Add THIRD mode of removal: 
+        # TODO: Add THIRD mode of removal:
         #       Walk through list, remove FIRST OCCURANCE and up to N occurances
         #       Basically, add kwarg support for the shit in remove in the cli
         #       Default behavior of just passing item ID should remove the FIRST instance of said item
-        item_ids = [ item.id for item in items ]
-        
+        item_ids = [item.id for item in items]
+
         if remove_all:
             self.sp.playlist_remove_all_occurrences_of_items(self.id, item_ids)
-        
+
         specfic_items = []
         normal_items = dict()
 
         # Associate positions lists, if specified, to track ids
-        for item, position_list in zip_longest(items, positions, fillvalue=None): 
-           
+        for item, position_list in zip_longest(
+            items, positions, fillvalue=None
+        ):
+
             # Pos lit can be None, or can be empty if a track was skipped with '...'
             if position_list is not None and len(position_list) > 0:
-                specfic_items.append({"uri": item.id, "positions": position_list})
+                specfic_items.append(
+                    {"uri": item.id, "positions": position_list}
+                )
             else:
                 normal_items[item.id] = count
-        
+
         # Make inital call to handle specific positon specified tracks
         if len(specfic_items) > 0:
             self.sp.playlist_remove_specific_occurrences_of_items(
@@ -207,27 +230,30 @@ class Playlist(Item, ItemCollection, Mutable):
 
         # Then locate and remove tracks that did not have specific position lists
         # This is also how tracks are normally handeled when a user does not provide a list of position lists
-        items = self.items(retrieve_all=True)        
+        items = self.items(retrieve_all=True)
         start, end = offset
         end = end if end not in {-1, None} else len(items)
         target_items = []
 
         # Walk the playlist from 'start' to 'end'
         for index, cur_item in enumerate(items[start:end]):
-            if count == 0: 
-                break 
+            if count == 0:
+                break
 
             # Check each item to see if it's one we want to remove
             if cur_item.id in normal_items:
                 # If we've already "removed" 'count' occurances of said item, skip this occurance
                 if normal_items[cur_item.id] <= 0:
-                    continue 
-                target_items.append({"uri": cur_item.id, "positions": [index + start]})
+                    continue
+                target_items.append(
+                    {"uri": cur_item.id, "positions": [index + start]}
+                )
                 normal_items[cur_item.id] -= 1
 
         self.sp.playlist_remove_specific_occurrences_of_items(
             self.id, target_items
         )
+
 
 class Artist(Item):
     """
@@ -272,8 +298,14 @@ class Album(Item, ItemCollection):
     def __repr__(self) -> str:
         return f"<{self.type}: name: {self.name}, id: {self.id}>"
 
-    def __str__(self):
-        return f"<{self.type}: name: {self.name}, id: {self.id}>"
+    def __str__(self) -> str:
+        name = self.info["name"]
+        rel_date = self.info["release_date"]
+        artists = ", ".join([item["name"] for item in self.info["artists"]])
+        track_count = self.info["total_tracks"]
+        url = self.info["external_urls"]["spotify"]
+        tr_id = self.info["id"]
+        return f"Album Name: {name}\nArtist(s): {artists}\nRelease Date: {rel_date}\nURL: {url}\nTrack Count: {track_count}\nID: {tr_id}"
 
     def items(self, limit=20, offset=0, retrieve_all=False):
         raw_tracks = self._items(

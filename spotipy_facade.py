@@ -215,4 +215,5 @@ class SpotipySpotifyFacade:
     @staticmethod
     def print_items(print_func, items):
         for item in items:
+            print_func("-----------------------------")
             print_func(item)
