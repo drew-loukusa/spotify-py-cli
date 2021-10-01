@@ -19,6 +19,12 @@ from app_strings import (
     Edit,
 )
 
+# Allow arguments to be piped in via stdin
+if __name__ == "__main__" and not sys.stdin.isatty():
+    piped_arguments = sys.stdin.readline().rstrip("\n").split(" ")
+    if len(piped_arguments) > 0:
+        sys.argv.extend(piped_arguments)
+
 spot = SpotipySpotifyFacade(output_object=typer.echo)
 app = typer.Typer()
 edit_app = typer.Typer()
