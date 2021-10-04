@@ -1,6 +1,5 @@
-from os import name
 import re
-from typing import List, Literal
+from typing import List
 
 from typer.testing import CliRunner
 
@@ -18,6 +17,7 @@ from user_libary import (
     SavedTracks,
 )
 from app_strings import (
+    Edit,
     General,
     Create,
     Listing,
@@ -555,77 +555,189 @@ class TestList:
         self._test_list("track", "--retrieve-all")
 
 
-# NOTE: Tests involving name are commented out because I've stripped out
-#       being able to use NAME to specify what items to unfollow... For now.
-#       I'm trying switch to using interfaces to do things, and the added complexity from
-#       trying to support selection by name is getting in my way.
-#       These tests will come back at a later date, probably.
+class TestEdit:
+    def test_edit_details(self):
 
-# Most of these go into "Unfollow"
-# def test_unfollow_pl_name_clash_no_prompt(self):
-#     """
-#     Test deleting when multiple lists exist with same name and
-#     --no-prompt flag was used ()
-#     If multiple lists exist with given name, cli does not know
-#     which to unfollow. It should exit with code 1, and tell user.
-#     """
-#     pl_id1 = spot.create_playlist(TEST_PL_NAME)
-#     pl_id2 = spot.create_playlist(TEST_PL_NAME)
+        name = TEST_PL_NAME
+        description = "TEST DESCRIPTION 1"
+        item_id = spot.create_playlist(
+            name=name,
+            public=False,
+            collaborative=False,
+            description=description,
+        )
+        playlist: Playlist = spot.get_item("playlist", item_id)
+        info = playlist.info
 
-#     result = runner.invoke(
-#         app, ["unfollow", "playlist", "--no-prompt", TEST_PL_NAME]
-#     )
+        assert playlist.name == TEST_PL_NAME
+        assert info["description"] == description
+        assert info["public"] == False
+        assert info["collaborative"] == False
 
-#     # Cleanup
-#     spot.unfollow_playlist(pl_id1)
-#     spot.unfollow_playlist(pl_id2)
+        new_name = "NEW_NAME"
+        new_desc = "TEST DESCRIPTION 2"
 
-#     assert result.exit_code == 0
-#     assert Unfollow.dupes_found.format(TEST_PL_NAME) in result.stdout
+        args = ["edit", "details", item_id, "--name", new_name]
+        args += ["--description", new_desc]
+        args += ["--public"]
+        args += ["--collaborative"]
+        result = runner.invoke(app, args=args)
 
-# def test_unfollow_artist_by_name(self):
-#     item_name = "Weezer"
-#     item_type = "artist"
-#     item_id = "3jOstUTkEu2JkjvRdBA5Gu"
-#     if USE_DUMMY_WRAPPER:
-#         spot.sp.create_non_followed_artist(item_id, item_name)
-#     spot.get_followable(item_type, item_id).follow()
-#     #spot.follow_artist(item_id)
-#     result = runner.invoke(
-#         app, ["unfollow", item_type, item_name, "--no-prompt"]
-#     )
+        updated_pl = spot.get_item("playlist", item_id)
+        spot.get_collection("playlist").remove(Playlist(spot.sp, item_id))
 
-#     following = spot.sp.current_user_following_artists([item_id])[0]
+        info = updated_pl.info
+        assert result.exit_code == 0
+        assert updated_pl.name == new_name
+        assert info["description"] == new_desc
+        assert info["public"] == True
+        assert info["collaborative"] == True
 
-#     assert result.exit_code == 0
-#     assert not following
-#     assert (
-#         Unfollow.unfollowed_item.format(item_name, item_id)
-#         in result.stdout
-#     )
+    def _modify_tracks_test(self, action, args, initial_tracks):
+        item_id = spot.create_playlist(name="TEST_PLAYLIST_ADD_REMOVE")
+        item = Playlist(spot.sp, item_id)
+        collection = FollowedPlaylists(spot.sp)
 
-# Redundant for now, since ID is the only thing supported
-# def test_unfollow_pl_by_id(self):
-#     pl_id = spot.create_playlist(TEST_PL_NAME)
+        if len(initial_tracks) > 0:
+            spot.sp.playlist_add_items(
+                item_id, initial_tracks
+            )  # , position=-1)
 
-#     result = runner.invoke(
-#         app, ["unfollow", "playlist", "--id", pl_id], input="y\n"
-#     )
-#     item_type = "playlist"
-#     following = spot.get_item(item_type, pl_id).following()
+        args = ["edit", action, item_id, *args]
 
-#     # Cleanup, if needed
-#     if following:
-#         spot.unfollow_playlist(pl_id)
+        try:
+            result = runner.invoke(app, args=args)
+        except Exception as e:
+            print(e)
 
-#     assert result.exit_code == 0
-#     assert (
-#         Unfollow.unfollowed_item.format(TEST_PL_NAME, pl_id)
-#         in result.stdout
-#     )
-#     assert not following
+        tracks = spot.sp.playlist_tracks(item_id)["items"]
 
-# def test_unfollow_no_name_or_id(self):
-#     result = runner.invoke(app, ["unfollow", "playlist", "--no-prompt"])
-#     assert result.exit_code == 1
-#     assert General.spec_name_id in result.stdout
+        # cleanup
+        collection.remove(item)
+
+        assert result.exit_code == 0
+        return tracks, result
+
+    def test_add_track(self):
+        init_tracks = ["55d553uqFMy1882OvdPPvV"]
+        new_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "add", [new_track]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+
+        assert tracks[-1]["track"]["id"] == new_track
+
+    def test_add_track_with_position(self):
+        init_tracks = ["55d553uqFMy1882OvdPPvV"]
+        new_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "add", [new_track, "--insert-at", "0"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == new_track
+
+    def test_add_track_no_dupe(self):
+        init_tracks = ["3hgdCqTrU786DoKcqMGsA8"]
+        new_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "add", [new_track, "--add-if-unique"]
+        tracks, result = self._modify_tracks_test(action, args, init_tracks)
+        assert len(tracks) == 1
+        assert Edit.Add.not_unique in result.stdout
+
+    def test_add_multiple_tracks(self):
+        init_tracks = []
+        new_tracks = ["3hgdCqTrU786DoKcqMGsA8", "55d553uqFMy1882OvdPPvV"]
+        action, args = "add", [*new_tracks]
+        tracks, result = self._modify_tracks_test(action, args, init_tracks)
+        assert len(tracks) == 2
+        # assert "Tracks succesfully added!" in result.stdout
+
+    def test_remove_track(self):
+        init_tracks = ["55d553uqFMy1882OvdPPvV", "3hgdCqTrU786DoKcqMGsA8"]
+        target_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "remove", [target_track]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
+
+    def test_remove_track_all(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "3hgdCqTrU786DoKcqMGsA8",
+        ]
+        target_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "remove", [target_track, "--all"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
+        assert tracks[0]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
+        assert len(tracks) == 1
+
+    def test_remove_track_specific(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "3hgdCqTrU786DoKcqMGsA8",
+        ]
+        target_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "remove", [target_track, "--specific", "0,2"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[-1]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
+        assert tracks[0]["track"]["id"] == "55d553uqFMy1882OvdPPvV"
+        assert len(tracks) == 1
+
+    def test_remove_track_using_offset(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "3hgdCqTrU786DoKcqMGsA8",
+        ]
+        target_track = "3hgdCqTrU786DoKcqMGsA8"
+        action, args = "remove", [target_track, "--offset", 1, -1]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[-1]["track"]["id"] == init_tracks[1]
+        assert tracks[0]["track"]["id"] == init_tracks[0]
+        assert len(tracks) == 2
+
+    def test_remove_multiple_tracks(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "1c5aqW0BsVBWEiLS22xYys",
+        ]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == init_tracks[1]
+        assert tracks[-1]["track"]["id"] == init_tracks[-2]
+        assert len(tracks) == 2
+
+    def test_remove_multiple_tracks_with_dupes(self):
+        init_tracks = [
+            "3hgdCqTrU786DoKcqMGsA8",
+            "1c5aqW0BsVBWEiLS22xYys",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "3hgdCqTrU786DoKcqMGsA8",
+            "55d553uqFMy1882OvdPPvV",
+            "1c5aqW0BsVBWEiLS22xYys",
+        ]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == init_tracks[2]
+        assert tracks[-1]["track"]["id"] == init_tracks[-1]
+        assert len(tracks) == 4
+
+    def test_remove_multiple_tracks_specific(self):
+        init_tracks = [
+            "1c5aqW0BsVBWEiLS22xYys",
+            "55d553uqFMy1882OvdPPvV",
+            "3hgdCqTrU786DoKcqMGsA8",
+            "6eXViRiXJKufjfzY3Ntxhx",
+            "3hgdCqTrU786DoKcqMGsA8",
+            "1c5aqW0BsVBWEiLS22xYys",
+            "3hgdCqTrU786DoKcqMGsA8",
+        ]
+        target_tracks = ["3hgdCqTrU786DoKcqMGsA8", "1c5aqW0BsVBWEiLS22xYys"]
+        action, args = "remove", [*target_tracks, "--specific", "2,4; 0"]
+        tracks, _ = self._modify_tracks_test(action, args, init_tracks)
+        assert tracks[0]["track"]["id"] == init_tracks[1]
+        assert tracks[-1]["track"]["id"] == init_tracks[-1]
+        assert len(tracks) == 4

@@ -2,7 +2,7 @@
 This module contains a dummy wrapper used for local testing. 
 The dummy wrapper emulates some behavior of the spotipy Spotify API wrapper.
 """
-from items import Show
+from items import Show, Track
 from typing import List
 
 
@@ -204,6 +204,77 @@ class DummySpotipy:
             return item
 
         return self.select_item("playlist", playlist_id, extern=1)
+
+    def playlist_add_items(self, playlist_id, items, position=None):
+        playlist = self.select_item("playlist", playlist_id, extern=0)
+
+        if "tracks" not in playlist:
+            playlist["tracks"] = {"items": []}
+        elif "items" not in playlist["tracks"]:
+            playlist["tracks"]["items"] = []
+        for item in items:
+            track = {"track": {"id": item, "name": f"track_{self.pl_id_count}"}}
+            if position is not None:
+                playlist["tracks"]["items"].insert(position, track)
+            else:
+                playlist["tracks"]["items"].append(track)
+
+    def playlist_tracks(
+        self,
+        playlist_id,
+        fields=None,
+        limit=100,
+        offset=0,
+        market=None,
+        additional_types=("track",),
+    ):
+        tracks = self.select_item("playlist", playlist_id, extern=0)["tracks"]
+        tracks.update({"next": None})
+        return tracks
+
+    def playlist_remove_all_occurrences_of_items(self, playlist_id, items):
+        playlist = self.select_item("playlist", playlist_id)
+        tracks = playlist["tracks"]["items"]
+        for item_id in items:
+            count = 0
+            for i, track in enumerate(tracks):
+                if track["track"]["id"] == item_id:
+                    tracks[i] = "REMOVE"
+                    count += 1
+            for _ in range(count):
+                tracks.remove("REMOVE")
+
+    def playlist_remove_specific_occurrences_of_items(self, playlist_id, items):
+        playlist = self.select_item("playlist", playlist_id)
+        tracks = playlist["tracks"]["items"]
+        count = 0
+        for item in items:
+            item_id, positions = item["uri"], item["positions"]
+            for pos in positions:
+                track = tracks[pos]
+                if track["track"]["id"] == item_id:
+                    tracks[pos] = "REMOVE"
+                    count += 1
+        for _ in range(count):
+            tracks.remove("REMOVE")
+
+    def playlist_change_details(
+        self,
+        playlist_id,
+        name=None,
+        public=None,
+        collaborative=None,
+        description=None,
+    ):
+        playlist = self.select_item("playlist", playlist_id)
+        if name is not None:
+            playlist["name"] = name
+        if public is not None:
+            playlist["public"] = public
+        if collaborative is not None:
+            playlist["collaborative"] = collaborative
+        if description is not None:
+            playlist["description"] = description
 
     # ============================== Albums ===================================#
     def album(self, album_id):

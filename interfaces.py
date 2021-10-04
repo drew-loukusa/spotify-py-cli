@@ -95,11 +95,17 @@ class Mutable:
     """
 
     @abstractmethod
-    def add(self, item: Item):
-        """Add an item to the collection"""
+    def add(self, item: Item, **kwargs):
+        """
+        Add an item to the collection.
+        Accepts arbitrary keyword arguments to allow better control over how item is added to collection
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def remove(self, item: Item):
-        """Remove an item from the collection"""
+    def remove(self, item: Item, **kwargs):
+        """
+        Remove an item from the collection
+        Accepts arbitrary keyword arguments to allow better control over how item is removed from collection
+        """
         raise NotImplementedError

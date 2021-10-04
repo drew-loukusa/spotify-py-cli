@@ -1,6 +1,8 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
 import sys
+from typing import List, Tuple
+from itertools import zip_longest
 
 import typer
 
@@ -14,11 +16,19 @@ from app_strings import (
     Unfollow,
     Save,
     Unsave,
+    Edit,
 )
 
+# Allow arguments to be piped in via stdin
+if __name__ == "__main__" and not sys.stdin.isatty():
+    piped_arguments = sys.stdin.readline().rstrip("\n").split(" ")
+    if len(piped_arguments) > 0:
+        sys.argv.extend(piped_arguments)
 
 spot = SpotipySpotifyFacade(output_object=typer.echo)
 app = typer.Typer()
+edit_app = typer.Typer()
+app.add_typer(edit_app, name="edit", help=Edit.help)
 
 
 @app.callback()
@@ -37,7 +47,7 @@ def create(
     force: bool = typer.Option(False, help=Create.force_help),
 ):
     """
-    Creates a new playlist.
+    Create a new playlist.
     """
 
     # Check if name is already in use
@@ -217,12 +227,16 @@ def search(
 @app.command(no_args_is_help=True)
 def list(
     item_type: str = typer.Argument(
-        ..., help="Item type of collection to list"
+        ...,
+        help="Item type of collection to list. Supported types: playlist, album, track, artist, show, episode",
     ),
     limit: int = typer.Option(10, help="TODO: Add help"),
     offset: int = typer.Option(0, help="TODO: Add help"),
     retrieve_all: bool = typer.Option(False, help="TODO: Add help"),
 ):
+    """
+    List out items you have saved/followed.
+    """
     collection = spot.get_collection(item_type)
     if collection is None:
         typer.echo(f"Collection for type {item_type} does not exist")
@@ -237,6 +251,114 @@ def list(
         limit=limit, offset=offset, retrieve_all=retrieve_all
     ):
         typer.echo(item)
+
+
+@edit_app.command(no_args_is_help=True)
+def add(
+    playlist_id: str = typer.Argument(
+        ..., help="ID of playlist to add tracks to"
+    ),
+    track_ids: List[str] = typer.Argument(
+        ...,
+        help=Edit.Add.track_ids_help,
+    ),
+    insert_at: str = typer.Option(
+        None, "--insert-at", "-i", help=Edit.Add.insert_at_help
+    ),
+    add_if_unique: bool = typer.Option(
+        False,
+        "--add-if-unique/--add-if-dupe",
+        "-u/-U",
+        help=Edit.Add.unique_help,
+    ),
+):
+    """
+    Add tracks to a playlist you own or are a collaborator on.
+    """
+    collection = spot.get_item("playlist", playlist_id)
+
+    if insert_at is None:
+        insert_at = [[None]] * len(track_ids)
+    else:
+        insert_at = [
+            [int(n) for n in tk.split(",")]
+            for tk in insert_at.rstrip().split(";")
+        ]
+
+    for track_id, index_list in zip_longest(
+        track_ids, insert_at, fillvalue=[None]
+    ):
+        item = spot.get_item("track", track_id)
+        if add_if_unique and collection.contains(item):
+            typer.echo(Edit.Add.not_unique)
+            continue
+
+        for index in index_list:
+            position = index
+            collection.add(item, position=position)
+
+
+@edit_app.command(no_args_is_help=True)
+def remove(
+    playlist_id: str = typer.Argument(
+        ..., help="ID of playlist to add tracks to"
+    ),
+    track_ids: List[str] = typer.Argument(
+        ...,
+        help=Edit.Remove.track_ids_help,
+    ),
+    all: bool = typer.Option(False, "--all", "-a", help=Edit.Remove.all_help),
+    specific: str = typer.Option(
+        None, "--specific", "-s", help=Edit.Remove.specific_help
+    ),
+    offset: Tuple[int, int] = typer.Option(
+        (0, -1), "--offset", "-o", help=Edit.Remove.offset_help
+    ),
+    count: int = typer.Option(1, "--count", "-c", help=Edit.Remove.count_help),
+):
+    """
+    Remove tracks from a playlist you own, or are a collaborator on
+    """
+    collection = spot.get_item("playlist", playlist_id)
+
+    if specific is None:
+        specific = []
+    else:
+        specific = [
+            [int(n) for n in tk.split(",") if tk.strip() != "..."]
+            for tk in specific.rstrip().split(";")
+        ]
+
+    items = [spot.get_item("track", track_id) for track_id in track_ids]
+    collection.remove(
+        items, positions=specific, all=all, offset=offset, count=count
+    )
+
+
+@edit_app.command(no_args_is_help=True)
+def details(
+    playlist_id: str = typer.Argument(..., help="ID of playlist to edit"),
+    name: str = typer.Option(None, "--name", "-n", help=Edit.Details.name_help),
+    public: bool = typer.Option(
+        None, "--public", "-P", help=Edit.Details.public_help
+    ),
+    collaborative: bool = typer.Option(
+        None, "--collaborative", "-c", help=Edit.Details.collab_help
+    ),
+    description: str = typer.Option(
+        None, "--description", "-d", help=Edit.Details.desc_help
+    ),
+):
+    """
+    Modify the details of playlist you own, or you that you are a collaborator on
+    """
+    playlist = spot.get_item("playlist", playlist_id)
+    playlist.change_details(
+        name=name,
+        public=public,
+        collaborative=collaborative,
+        description=description,
+    )
 
 
 if __name__ == "__main__":
