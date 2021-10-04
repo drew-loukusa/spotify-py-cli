@@ -5,6 +5,8 @@ import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 
+from interfaces import Item, ItemCollection
+
 from items import Artist, Playlist, Track, Album, Episode, Show
 from user_libary import (
     FollowedArtists,

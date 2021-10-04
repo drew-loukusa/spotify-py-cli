@@ -26,7 +26,7 @@ if __name__ == "__main__" and not sys.stdin.isatty():
         sys.argv.extend(piped_arguments)
 
 spot = SpotipySpotifyFacade(output_object=typer.echo)
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 edit_app = typer.Typer()
 app.add_typer(edit_app, name="edit", help=Edit.help)
 
@@ -35,6 +35,7 @@ app.add_typer(edit_app, name="edit", help=Edit.help)
 def callback():
     """
     A CLI app for interacting with Spotify. It's a work in progress, so please be patient.
+    Run any command without args to get a more detailed help message.
     """
 
 
