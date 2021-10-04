@@ -31,8 +31,6 @@ SCOPE = "playlist-modify-private \
 
 # If testing locally, use the dummy wrapper
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
-#SpotifyWrapper = spotipy.Spotify
-
 
 class SpotipySpotifyFacade:
     """
