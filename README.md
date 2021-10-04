@@ -6,6 +6,51 @@ The primary purpose behind developing this app was to gain experience in using T
 
 **NOTE:** This app is still a work in progress and as such, some of the info in this doc may be subject to change.
 
+## How To Use
+First, follow the steps in [Setup](##setup)
+
+lormum 
+
+ipsum
+
+test
+
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+lormum 
+
+ipsum
+
+test
+
 ## Setup 
 
 First, you must get authorization.
