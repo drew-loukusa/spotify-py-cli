@@ -356,7 +356,7 @@ class TestUnfollow:
         )
         assert result.exit_code == 1
         assert (
-            General.item_DNE.format(item_type, "id", "DNE_ID") in result.stdout
+            Unfollow.item_DNE.format("DNE_ID") in result.stdout
         )
 
 

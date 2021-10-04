@@ -16,7 +16,7 @@ from user_libary import (
     SavedEpisodes,
     SavedShows,
 )
-# from dummy_spotipy import DummySpotipy
+from dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SCOPE = "playlist-modify-private \
@@ -30,8 +30,8 @@ SCOPE = "playlist-modify-private \
 
 
 # If testing locally, use the dummy wrapper
-# SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
-SpotifyWrapper = spotipy.Spotify
+SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
+#SpotifyWrapper = spotipy.Spotify
 
 
 class SpotipySpotifyFacade:

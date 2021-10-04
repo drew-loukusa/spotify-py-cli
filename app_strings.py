@@ -64,6 +64,7 @@ class Unfollow:
         + "Please specify with '--id' which item to unfollow."
     )
 
+    item_DNE = "No playlist exists with id: {}"
     confirm = "Are you sure you want to unfollow the {} '{}', id: {}?"
     unfollowed_item = "unfollowed item: {}, ID: {}"
 
