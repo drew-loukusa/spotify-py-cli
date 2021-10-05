@@ -12,9 +12,7 @@ class General:
 
 class Create:
     # Help strings for options
-    force_help = (
-        "Create the playlist, even if one already exists with name NAME"
-    )
+    force_help = "Create the playlist, even if you already own or follow a playlist with name NAME"
     collab_help = "Is the created playlist collaborative"
     desc_help = "Playlist description."
     public_help = "Is the created playlist public"

@@ -52,9 +52,15 @@ def create(
     Create a new playlist.
     """
 
-    # Check if name is already in use
-    playlist = spot.get_playlist(pl_name=name)
-    name_exists = playlist is not None
+    # Check if you already have a playlist with name 'pl_name'
+    name_exists = False
+    followed_playlists = spot.get_collection("playlist").items(
+        retrieve_all=True
+    )
+    if followed_playlists is not None:
+        for playlist in followed_playlists:
+            if name == playlist.name:
+                name_exists = True
 
     if not name_exists or force:
         spot.create_playlist(
