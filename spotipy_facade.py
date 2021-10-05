@@ -32,6 +32,7 @@ SCOPE = "playlist-modify-private \
 # If testing locally, use the dummy wrapper
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
+
 class SpotipySpotifyFacade:
     """
     A facade for simplifying interaction with spotipy's Spotify object.
@@ -96,12 +97,6 @@ class SpotipySpotifyFacade:
 
         return None if len(selected_items) == 0 else selected_items
 
-    def get_unfollowed_item():
-        # This can be a seperate function, or you can make this an argument of 'get_followed_item' and rename it back to 'get_item'
-        # Getting an item for unfollowing means get the item from the user's followed itmes
-        # gettting an item for following means searching the publicly available items
-        pass
-
     def get_item_and_collection(
         self, item_type: str, item_id: str, output_stream=None
     ):
@@ -159,7 +154,10 @@ class SpotipySpotifyFacade:
             collaborative=collaborative,
             description=description,
         )
-        return result["id"]
+        if result is not None:
+            playlist = self.get_item("playlist", result["id"])
+            return playlist
+        return None
 
     def unfollow_all_pl(self, pl_name: str) -> None:
         """Attempts to unfollow all playlists with the same name"""

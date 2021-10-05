@@ -49,7 +49,7 @@ class TestCreate:
         assert Create.plist_created in result.stdout
 
     def test_create_name_clash_no_force(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
+        pl_id = spot.create_playlist(TEST_PL_NAME).id
         fp = FollowedPlaylists(spot.sp)
         result = runner.invoke(app, ["create", TEST_PL_NAME])
 
@@ -61,7 +61,7 @@ class TestCreate:
 
     def test_create_name_clash_force(self):
         item_type = "playlist"
-        spot.create_playlist(TEST_PL_NAME)
+        spot.create_playlist(TEST_PL_NAME).id
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--force"])
 
         pl_ids = spot.get_pl_id(TEST_PL_NAME)
@@ -306,7 +306,7 @@ class TestUnfollow:
         )
 
     def test_unfollow_pl_prompt_cancled(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
+        pl_id = spot.create_playlist(TEST_PL_NAME).id
         playlist = Playlist(spot.sp, pl_id)
         result = runner.invoke(
             app, ["unfollow", "playlist", pl_id], input="n\n"
@@ -319,7 +319,7 @@ class TestUnfollow:
         assert General.op_canceled in result.stdout
 
     def test_unfollow_pl_prompt_approved(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
+        pl_id = spot.create_playlist(TEST_PL_NAME).id
         playlist = Playlist(spot.sp, pl_id)
         fp = FollowedPlaylists(spot.sp)
 
@@ -355,9 +355,7 @@ class TestUnfollow:
             app, ["unfollow", item_type, "DNE_ID"], input="y\n"
         )
         assert result.exit_code == 1
-        assert (
-            Unfollow.item_DNE.format("DNE_ID") in result.stdout
-        )
+        assert Unfollow.item_DNE.format("DNE_ID") in result.stdout
 
 
 class TestUnsave:
@@ -424,7 +422,7 @@ class TestSearch:
         assert Search.list_all in result.stdout
 
     def test_search_name_provided_and_playlist_exists(self):
-        pl_id = spot.create_playlist(TEST_PL_NAME)
+        pl_id = spot.create_playlist(TEST_PL_NAME).id
         playlist = Playlist(spot.sp, pl_id)
         fp = FollowedPlaylists(spot.sp)
         result = runner.invoke(app, ["search", "playlist", TEST_PL_NAME])
@@ -448,8 +446,8 @@ class TestSearch:
         assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
-        pl_id1 = spot.create_playlist(TEST_PL_NAME)
-        pl_id2 = spot.create_playlist(TEST_PL_NAME)
+        pl_id1 = spot.create_playlist(TEST_PL_NAME).id
+        pl_id2 = spot.create_playlist(TEST_PL_NAME).id
         play1 = Playlist(spot.sp, pl_id1)
         play2 = Playlist(spot.sp, pl_id2)
         result = runner.invoke(
@@ -560,13 +558,13 @@ class TestEdit:
 
         name = TEST_PL_NAME
         description = "TEST DESCRIPTION 1"
-        item_id = spot.create_playlist(
+        playlist = spot.create_playlist(
             name=name,
             public=False,
             collaborative=False,
             description=description,
         )
-        playlist: Playlist = spot.get_item("playlist", item_id)
+        item_id = playlist.id
         info = playlist.info
 
         assert playlist.name == TEST_PL_NAME
@@ -594,8 +592,8 @@ class TestEdit:
         assert info["collaborative"] == True
 
     def _modify_tracks_test(self, action, args, initial_tracks):
-        item_id = spot.create_playlist(name="TEST_PLAYLIST_ADD_REMOVE")
-        item = Playlist(spot.sp, item_id)
+        item = spot.create_playlist(name="TEST_PLAYLIST_ADD_REMOVE")
+        item_id = item.id
         collection = FollowedPlaylists(spot.sp)
 
         if len(initial_tracks) > 0:
