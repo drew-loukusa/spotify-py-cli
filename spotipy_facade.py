@@ -140,10 +140,10 @@ class SpotipySpotifyFacade:
         public=False,
         collaborative=False,
         description="",
-    ) -> str:
+    ) -> Playlist:
         """
         Attempts to create a playlist with the given name.
-        Returns the playlist id if successful.
+        Returns a Playlist object if succesful, None if not.
         """
         result = self.sp.user_playlist_create(
             user=self.user_id,

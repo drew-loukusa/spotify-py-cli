@@ -447,10 +447,8 @@ class TestSearch:
         assert General.not_found.format(TEST_PL_NAME) in result.stdout
 
     def test_search_multiple_exist(self):
-        pl_id1 = spot.create_playlist(TEST_PL_NAME).id
-        pl_id2 = spot.create_playlist(TEST_PL_NAME).id
-        play1 = Playlist(spot.sp, pl_id1)
-        play2 = Playlist(spot.sp, pl_id2)
+        play1 = spot.create_playlist(TEST_PL_NAME)
+        play2 = spot.create_playlist(TEST_PL_NAME)
         result = runner.invoke(
             app, ["search", "playlist", TEST_PL_NAME, "--user"]
         )
@@ -594,22 +592,19 @@ class TestEdit:
 
     def _modify_tracks_test(self, action, args, initial_tracks):
         item = spot.create_playlist(name="TEST_PLAYLIST_ADD_REMOVE")
-        item_id = item.id
         collection = FollowedPlaylists(spot.sp)
 
         if len(initial_tracks) > 0:
-            spot.sp.playlist_add_items(
-                item_id, initial_tracks
-            )  # , position=-1)
+            spot.sp.playlist_add_items(item.id, initial_tracks)
 
-        args = ["edit", action, item_id, *args]
+        args = ["edit", action, item.id, *args]
 
         try:
             result = runner.invoke(app, args=args)
         except Exception as e:
             print(e)
 
-        tracks = spot.sp.playlist_tracks(item_id)["items"]
+        tracks = spot.sp.playlist_tracks(item.id)["items"]
 
         # cleanup
         collection.remove(item)
