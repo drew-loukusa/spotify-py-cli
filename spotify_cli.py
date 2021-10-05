@@ -1,6 +1,7 @@
 """A CLI app for interacting with Spotify. It's a work in progress, so please be patient."""
 
 import sys
+import textwrap
 from typing import List, Tuple
 from itertools import zip_longest
 
@@ -193,6 +194,7 @@ def search(
 
     To limit search to just items that a user follows use the '--user' flag
     Don't provide a name and this command will list all playlists you follow.
+    TODO: Delete this feature. functionality lives in LIST now.
     """
 
     if query == "" and user:
@@ -251,7 +253,11 @@ def list(
     for item in collection.items(
         limit=limit, offset=offset, retrieve_all=retrieve_all
     ):
-        typer.echo(item)
+        typer.echo("-" * 80)
+        for line in str(item).split("\n"):
+            wrapped = textwrap.wrap(line, width=80)
+            for sub_line in wrapped:
+                typer.echo(sub_line)
 
 
 @edit_app.command(no_args_is_help=True)
