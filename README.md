@@ -59,7 +59,7 @@ The facade itself is comprised of three modules: `spotify_facade.py`, the main f
 The types defined in `items.py`, and `user_library.py` implement interfaces as defined in `interfaces.py`. 
 
 **Figure 1.1**
-![stuff](img\module_layout.png)
+![fig1.1](img/module_layout.png)
 
 ## Setup 
 
