@@ -7,49 +7,57 @@ The primary purpose behind developing this app was to gain experience in using T
 **NOTE:** This app is still a work in progress and as such, some of the info in this doc may be subject to change.
 
 ## How To Use
-First, follow the steps in [Setup](##setup)
+First, follow the steps in [Setup](#setup).
 
-lormum 
+Once you have an executable, or you've downloaded the source, and have a terminal open, run it!
+With Python:
+> python spotify-cli.py 
 
-ipsum
+Using exe with Windows:
+> .\spotify-cli 
 
-test
+Linux:
+> ./spotify-cli 
 
-lormum 
+Running it without any arguments will in typical command line fashion show usage help. Run any command without args to get specfic help for any given command.
 
-ipsum
+## Supported Functionality
+Currently with this cli you can do the following:
+* Create new playlists
+    * You can set the name, description, public status, and collaborative status
+* Edit any existing playlists you own, or are a collaborator on 
+* Add and remove items from your user library
+    * This includes followable items like artists and playlists, as well as savable items like albums, tracks, episodes and shows
+    * Currently following, unfollowing, saving, and unsaving are all seperate commands
+* Show (list) items currently in your user library 
+    * Supports all followable/savable items
 
-test
-lormum 
+## Future Functionality 
+### Here are features that I want to add in the very close, to near future:
+The biggest one in mind is playback support. I may add other smaller things, but this is the primary thing I don't have yet that I want to add. Here's a more detailed list of what I'm looking to add:
+* Playback support
+    * Be able to play and pause playback of the current track
+    * 'play' command will also accept a track id so you can start playback of a new track
+    * Be able skip to next track
+    * Be able to toggle shuffle on and off
+    * Seek position in a track 
+    * Set volume
+    * Add an item to the playback queue (passing multiple track ids to 'play' will also do this)
 
-ipsum
+## Design
 
-test
-lormum 
+This a very brief overview of my program design, bug me if you want me to expand this. I'll probably expand it at some point in the future.
 
-ipsum
+Broadly speaking, the cli `spotify-cli.py` depends only on one thing, a facade. The facade `spotipy_facade.py` is a wrapper I wrote around `spotipy` which is itself a wrapper written around the Spotify API. 
 
-test
-lormum 
+I wrote the facade to further simplify interaction (and seperate my cli app from) the wrapper. 
 
-ipsum
+The facade itself is comprised of three modules: `spotify_facade.py`, the main file, `items.py`, and `user_library.py`. 
 
-test
-lormum 
+`items.py`, and `user_library.py` both contain item types which the facade works with, and returns to the cli based on what commands are being run. The types in those two files are the basis for all interaction with the api.
 
-ipsum
+The types defined in `items.py`, and `user_library.py` implement interfaces as defined in `interfaces.py`. 
 
-test
-lormum 
-
-ipsum
-
-test
-lormum 
-
-ipsum
-
-test
 
 ## Setup 
 
