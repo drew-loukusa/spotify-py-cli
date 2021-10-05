@@ -27,6 +27,7 @@ from app_strings import (
     Save,
     Unsave,
 )
+import testing_utils as tu
 
 runner = CliRunner()
 
@@ -37,7 +38,7 @@ class TestCreate:
     def test_create_playlist(self):
         item_type = "playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME])
-        pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
+        pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         playlist = Playlist(spot.sp, pl_id)
         fp = FollowedPlaylists(spot.sp)
         following = fp.contains(playlist)
@@ -64,7 +65,7 @@ class TestCreate:
         spot.create_playlist(TEST_PL_NAME).id
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--force"])
 
-        pl_ids = spot.get_pl_id(TEST_PL_NAME)
+        pl_ids = tu.get_pl_id(spot.sp, TEST_PL_NAME)
         following = True
         for cur_id in pl_ids:
             following = FollowedPlaylists(spot.sp).contains(
@@ -72,7 +73,7 @@ class TestCreate:
             )
 
         # Clean up
-        spot.unfollow_all_pl(TEST_PL_NAME)
+        tu.unfollow_all_pl(spot.sp, TEST_PL_NAME)
 
         assert following
         assert result.exit_code == 0
@@ -81,12 +82,12 @@ class TestCreate:
     def test_create_with_description(self):
         desc = "A test playlist"
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
-        pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
+        pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         following = FollowedPlaylists(spot.sp).contains(
             Playlist(spot.sp, pl_id)
         )
         # Clean up
-        spot.unfollow_all_pl(TEST_PL_NAME)
+        tu.unfollow_all_pl(spot.sp, TEST_PL_NAME)
 
         assert following
         assert result.exit_code == 0
@@ -95,12 +96,12 @@ class TestCreate:
 
     def test_create_public(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--public"])
-        pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
+        pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         following = FollowedPlaylists(spot.sp).contains(
             Playlist(spot.sp, pl_id)
         )
         # Clean up
-        spot.unfollow_all_pl(TEST_PL_NAME)
+        tu.unfollow_all_pl(spot.sp, TEST_PL_NAME)
 
         assert following
         assert result.exit_code == 0
@@ -109,7 +110,7 @@ class TestCreate:
 
     def test_create_collaborative(self):
         result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
-        pl_id = spot.get_pl_id(TEST_PL_NAME)[0]
+        pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         playlist = Playlist(spot.sp, pl_id)
         fp = FollowedPlaylists(spot.sp)
         following = fp.contains(playlist)
