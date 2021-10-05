@@ -48,7 +48,7 @@ The biggest one in mind is playback support. I may add other smaller things, but
 
 This a very brief overview of my program design, bug me if you want me to expand this. I'll probably expand it at some point in the future.
 
-Broadly speaking, the cli `spotify-cli.py` depends only on one thing, a facade. The facade `spotipy_facade.py` is a wrapper I wrote around `spotipy` which is itself a wrapper written around the Spotify API. 
+Broadly speaking, the cli `spotify-cli.py` depends only on one thing, a facade. The facade `spotipy_facade.py` is a wrapper I wrote around `spotipy` which is itself a wrapper written around the Spotify API. _See Figure 1.1 for a visual layout of the modules_.
 
 I wrote the facade to further simplify interaction (and seperate my cli app from) the wrapper. 
 
@@ -58,6 +58,8 @@ The facade itself is comprised of three modules: `spotify_facade.py`, the main f
 
 The types defined in `items.py`, and `user_library.py` implement interfaces as defined in `interfaces.py`. 
 
+**Figure 1.1**
+![stuff](img\module_layout.png)
 
 ## Setup 
 
