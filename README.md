@@ -44,6 +44,10 @@ The biggest one in mind is playback support. I may add other smaller things, but
     * Set volume
     * Add an item to the playback queue (passing multiple track ids to 'play' will also do this)
 
+* Easy-to-parse output
+    * Any command that returns output, will have an option to make the output easy to parse (vs being nice to look at for a human). The idea being, if you want to pipe output from one command invocation, into another invocation, you can. 
+    * An example I'd like to be able to support, get a list of track ids from search command, and then pipe those into the playback command.
+
 ## Design
 
 This a very brief overview of my program design, bug me if you want me to expand this. I'll probably expand it at some point in the future.
