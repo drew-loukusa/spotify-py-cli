@@ -5,10 +5,10 @@ import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 
-from interfaces import Item, ItemCollection
+from cli.facade.interfaces import Item, ItemCollection
 
-from items import Artist, Playlist, Track, Album, Episode, Show
-from user_libary import (
+from cli.facade.items import Artist, Playlist, Track, Album, Episode, Show
+from cli.facade.user_libary import (
     FollowedArtists,
     FollowedPlaylists,
     SavedTracks,
@@ -16,7 +16,7 @@ from user_libary import (
     SavedEpisodes,
     SavedShows,
 )
-from dummy_spotipy import DummySpotipy
+from tests.dummy_spotipy import DummySpotipy
 
 USE_DUMMY_WRAPPER = config("USE_DUMMY_WRAPPER", cast=bool, default=False)
 SCOPE = "playlist-modify-private \

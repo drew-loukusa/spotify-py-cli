@@ -5,10 +5,10 @@ This module contains item classes used for managing Spotify items.
 import textwrap
 from itertools import zip_longest
 
-from typing import Collection, Counter, List
+from typing import List
 from spotipy import Spotify
 
-from interfaces import Item, ItemCollection, Mutable
+from .interfaces import Item, ItemCollection, Mutable
 
 
 class Episode(Item):
@@ -308,7 +308,7 @@ class Album(Item, ItemCollection):
         return f"Album Name: {name}\nArtist(s): {artists}\nRelease Date: {rel_date}\nURL: {url}\nTrack Count: {track_count}\nID: {tr_id}"
 
     def items(self, limit=20, offset=0, retrieve_all=False) -> List[Track]:
-        raw_tracks = self._get_item(
+        raw_tracks = self._items(
             self.sp.album_tracks,
             album_id=self.id,
             limit=limit,
