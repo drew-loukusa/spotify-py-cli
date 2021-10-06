@@ -33,7 +33,7 @@ SCOPE = "playlist-modify-private \
 SpotifyWrapper = DummySpotipy if USE_DUMMY_WRAPPER else spotipy.Spotify
 
 
-class SpotipySpotifyFacade:
+class SpotipyFacade:
     """
     A facade for simplifying interaction with spotipy's Spotify object.
     """

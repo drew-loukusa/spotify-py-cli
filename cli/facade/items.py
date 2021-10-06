@@ -8,7 +8,7 @@ from itertools import zip_longest
 from typing import List
 from spotipy import Spotify
 
-from .interfaces import Item, ItemCollection, Mutable
+from cli.facade.interfaces import Item, ItemCollection, Mutable
 
 
 class Episode(Item):

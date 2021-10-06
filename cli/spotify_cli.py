@@ -7,8 +7,8 @@ from itertools import zip_longest
 
 import typer
 
-from .facade.spotipy_facade import SpotipySpotifyFacade
-from .app_strings import (
+import cli.facade.spotipy_facade as SF
+from cli.app_strings import (
     General,
     Create,
     Listing,
@@ -26,7 +26,7 @@ if __name__ == "__main__" and not sys.stdin.isatty():
     if len(piped_arguments) > 0:
         sys.argv.extend(piped_arguments)
 
-spot = SpotipySpotifyFacade(output_object=typer.echo)
+spot = SF.SpotipyFacade(output_object=typer.echo)
 app = typer.Typer(no_args_is_help=True)
 edit_app = typer.Typer()
 app.add_typer(edit_app, name="edit", help=Edit.help)
@@ -43,10 +43,14 @@ def callback():
 @app.command(no_args_is_help=True)
 def create(
     name: str,
-    desc: str = typer.Option("", help=Create.desc_help),
-    public: bool = typer.Option(False, help=Create.public_help),
-    collab: bool = typer.Option(False, help=Create.collab_help),
-    force: bool = typer.Option(False, help=Create.force_help),
+    desc: str = typer.Option("", "--description", "-d", help=Create.desc_help),
+    public: bool = typer.Option(
+        False, "--public", "-p", help=Create.public_help
+    ),
+    collab: bool = typer.Option(
+        False, "--collaborative", "-c", help=Create.collab_help
+    ),
+    force: bool = typer.Option(False, "--force", "-f", help=Create.force_help),
 ):
     """
     Create a new playlist.
@@ -132,6 +136,7 @@ def unfollow(
     no_prompt: bool = typer.Option(
         False,
         "--no-prompt",
+        "-n",
         help=Unfollow.no_prompt_help,
     ),
 ):
@@ -191,9 +196,9 @@ def search(
         ..., help="Item type to follow: 'playlist' or 'artist'"
     ),
     query: str = typer.Argument(""),
-    user: bool = typer.Option(False, help=Search.user_help),
-    limit: int = typer.Option(10, help=Search.limit_help),
-    market: str = typer.Option(None, help=Search.market_help),
+    user: bool = typer.Option(False, "--user", "-u", help=Search.user_help),
+    limit: int = typer.Option(10, "--limit", "-l", help=Search.limit_help),
+    market: str = typer.Option(None, "--market", "-m", help=Search.market_help),
 ):
     """
     Search for items.
@@ -239,9 +244,11 @@ def list(
         ...,
         help="Item type of collection to list. Supported types: playlist, album, track, artist, show, episode",
     ),
-    limit: int = typer.Option(10, help="TODO: Add help"),
-    offset: int = typer.Option(0, help="TODO: Add help"),
-    retrieve_all: bool = typer.Option(False, help="TODO: Add help"),
+    limit: int = typer.Option(10, "--limit", "-l", help=Listing.limit_help),
+    offset: int = typer.Option(0, "--offset", "-o", help=Listing.offset_help),
+    retrieve_all: bool = typer.Option(
+        False, "--retrieve-all", "-A", help=Listing.ret_all_help
+    ),
 ):
     """
     List out items you have saved/followed.

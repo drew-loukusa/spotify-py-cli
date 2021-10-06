@@ -27,7 +27,7 @@ from cli.app_strings import (
     Save,
     Unsave,
 )
-from . import testing_utils as tu
+import tests.testing_utils as tu
 
 runner = CliRunner()
 
@@ -81,7 +81,9 @@ class TestCreate:
 
     def test_create_with_description(self):
         desc = "A test playlist"
-        result = runner.invoke(app, ["create", TEST_PL_NAME, "--desc", desc])
+        result = runner.invoke(
+            app, ["create", TEST_PL_NAME, "--description", desc]
+        )
         pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         following = FollowedPlaylists(spot.sp).contains(
             Playlist(spot.sp, pl_id)
@@ -109,7 +111,7 @@ class TestCreate:
         assert Create.pub_status.format("True") in result.stdout
 
     def test_create_collaborative(self):
-        result = runner.invoke(app, ["create", TEST_PL_NAME, "--collab"])
+        result = runner.invoke(app, ["create", TEST_PL_NAME, "--collaborative"])
         pl_id = tu.get_pl_id(spot.sp, TEST_PL_NAME)[0]
         playlist = Playlist(spot.sp, pl_id)
         fp = FollowedPlaylists(spot.sp)

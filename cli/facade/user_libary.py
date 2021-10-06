@@ -8,8 +8,8 @@ from typing import List
 
 from spotipy import Spotify
 
-from .interfaces import Item, ItemCollection, Mutable
-from .items import Episode, Track, Artist, Album, Playlist, Show
+from cli.facade.interfaces import Item, ItemCollection, Mutable
+from cli.facade.items import Episode, Track, Artist, Album, Playlist, Show
 
 
 class SavedEpisodes(ItemCollection, Mutable):
