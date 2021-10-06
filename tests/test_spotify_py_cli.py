@@ -3,12 +3,12 @@ from typing import List
 
 from typer.testing import CliRunner
 
-from cli.spotipy_facade import USE_DUMMY_WRAPPER
+from cli.facade.spotipy_facade import USE_DUMMY_WRAPPER
 from cli.spotify_cli import spot, app
 
-from cli.interfaces import Item, ItemCollection
-from cli.items import Show, Episode, Track, Playlist, Artist, Album
-from cli.user_libary import (
+from cli.facade.interfaces import Item, ItemCollection
+from cli.facade.items import Show, Episode, Track, Playlist, Artist, Album
+from cli.facade.user_libary import (
     FollowedPlaylists,
     FollowedArtists,
     SavedAlbums,
@@ -27,7 +27,7 @@ from cli.app_strings import (
     Save,
     Unsave,
 )
-import tests.testing_utils as tu
+from . import testing_utils as tu
 
 runner = CliRunner()
 

@@ -7,8 +7,8 @@ from itertools import zip_longest
 
 import typer
 
-from cli.spotipy_facade import SpotipySpotifyFacade
-from cli.app_strings import (
+from .facade.spotipy_facade import SpotipySpotifyFacade
+from .app_strings import (
     General,
     Create,
     Listing,

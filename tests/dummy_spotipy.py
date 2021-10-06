@@ -2,7 +2,7 @@
 This module contains a dummy wrapper used for local testing. 
 The dummy wrapper emulates some behavior of the spotipy Spotify API wrapper.
 """
-from cli.items import Show, Track
+
 from typing import List
 
 

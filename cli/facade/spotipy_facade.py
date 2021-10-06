@@ -5,10 +5,10 @@ import spotipy
 from decouple import config
 from spotipy.oauth2 import SpotifyOAuth
 
-from cli.interfaces import Item, ItemCollection
+from cli.facade.interfaces import Item, ItemCollection
 
-from cli.items import Artist, Playlist, Track, Album, Episode, Show
-from cli.user_libary import (
+from cli.facade.items import Artist, Playlist, Track, Album, Episode, Show
+from cli.facade.user_libary import (
     FollowedArtists,
     FollowedPlaylists,
     SavedTracks,
