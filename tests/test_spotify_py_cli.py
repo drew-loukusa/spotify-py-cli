@@ -27,7 +27,7 @@ from cli.app_strings import (
     Save,
     Unsave,
 )
-from . import testing_utils as tu
+import tests.testing_utils as tu
 
 runner = CliRunner()
 

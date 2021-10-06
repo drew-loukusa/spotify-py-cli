@@ -7,8 +7,8 @@ from itertools import zip_longest
 
 import typer
 
-from .facade.spotipy_facade import SpotipySpotifyFacade
-from .app_strings import (
+import cli.facade.spotipy_facade as SF
+from cli.app_strings import (
     General,
     Create,
     Listing,
@@ -26,7 +26,7 @@ if __name__ == "__main__" and not sys.stdin.isatty():
     if len(piped_arguments) > 0:
         sys.argv.extend(piped_arguments)
 
-spot = SpotipySpotifyFacade(output_object=typer.echo)
+spot = SF.SpotipyFacade(output_object=typer.echo)
 app = typer.Typer(no_args_is_help=True)
 edit_app = typer.Typer()
 app.add_typer(edit_app, name="edit", help=Edit.help)
