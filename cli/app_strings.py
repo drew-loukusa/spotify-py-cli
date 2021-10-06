@@ -88,6 +88,14 @@ class Listing:
     listing = "Listing your saved/followed {}s:"
     params = "Limit: {}, Offset: {}"
     ret_all = "Retrieving all items..."
+    limit_help = (
+        "The number of items to return (min = 1, default = 10, max = 50)"
+    )
+
+    offset_help = "How many items to skip before listing LIMIT items"
+    ret_all_help = (
+        "Retrieve all items. If used, this overrides offset and limit."
+    )
 
 
 class Edit:
