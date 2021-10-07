@@ -35,8 +35,20 @@ app.add_typer(edit_app, name="edit", help=Edit.help)
 @app.callback()
 def callback():
     """
-    A CLI app for interacting with Spotify. It's a work in progress, so please be patient.
+    A CLI app for interacting with Spotify. It's a work in progress, so please 
+    be patient.
     Run any command without args to get a more detailed help message.
+
+    NOTE: Most commands require you to specify an 'item_type'. Run each command 
+    to get info on what item types are accepted for each command.
+
+    The item types are: 
+    
+    playlist, track, album, artist, show, episode
+
+    For your convenience, shortened type codes are also provided. They are as follows: 
+
+    pl, tr, al, ar, sh, ep
     """
 
 
@@ -55,7 +67,6 @@ def create(
     """
     Create a new playlist.
     """
-
     # Check if you already have a playlist with name 'pl_name'
     name_exists = False
     followed_playlists = spot.get_collection("playlist").items(
@@ -93,14 +104,13 @@ def follow(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Follow a followable item"""
-
     item, collection = spot.get_item_and_collection(
         item_type=item_type, item_id=item_id
     )
 
     if item is not None and collection is not None:
         collection.add(item)
-        typer.echo(Follow.followed.format(item_type, item.name, item_id))
+        typer.echo(Follow.followed.format(item.type, item.name, item.id))
         sys.exit(0)
 
     sys.exit(1)
@@ -114,14 +124,13 @@ def save(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Save a saveable item"""
-
     item, collection = spot.get_item_and_collection(
         item_type=item_type, item_id=item_id
     )
 
     if item is not None and collection is not None:
         collection.add(item)
-        typer.echo(Save.saved.format(item_type, item.name, item_id))
+        typer.echo(Save.saved.format(item.type, item.name, item.id))
         sys.exit(0)
 
     sys.exit(1)
@@ -156,14 +165,14 @@ def unfollow(
     confirm_Unfollow = False
     if not no_prompt:
         confirm_Unfollow = typer.confirm(
-            text=Unfollow.confirm.format(item_type, item.name, item_id)
+            text=Unfollow.confirm.format(item.type, item.name, item.id)
         )
     else:
         confirm_Unfollow = True
 
     if confirm_Unfollow:
         collection.remove(item)
-        typer.echo(Unfollow.unfollowed_item.format(item.name, item_id))
+        typer.echo(Unfollow.unfollowed_item.format(item.name, item.id))
         sys.exit(0)
 
     typer.echo(General.op_canceled)
@@ -177,14 +186,13 @@ def unsave(
     item_id: str = typer.Argument(..., help=Follow.id_help),
 ):
     """Unsave a saveable item"""
-
     item, collection = spot.get_item_and_collection(
         item_type=item_type, item_id=item_id
     )
 
     if item is not None and collection is not None:
         collection.remove(item)
-        typer.echo(Unsave.unsaved.format(item_type, item.name, item_id))
+        typer.echo(Unsave.unsaved.format(item.type, item.name, item.id))
         sys.exit(0)
 
     sys.exit(1)
@@ -207,7 +215,7 @@ def search(
     Don't provide a name and this command will list all playlists you follow.
     TODO: Delete this feature. functionality lives in LIST now.
     """
-
+    
     if query == "" and user:
         typer.echo(Search.list_all)
         spot.print_items(
@@ -253,12 +261,13 @@ def list(
     """
     List out items you have saved/followed.
     """
+    
     collection = spot.get_collection(item_type)
     if collection is None:
         typer.echo(f"Collection for type {item_type} does not exist")
         sys.exit(1)
 
-    typer.echo(Listing.listing.format(item_type))
+    typer.echo(Listing.listing.format(spot.elongate(item_type)))
     if not retrieve_all:
         typer.echo(Listing.params.format(limit, offset))
     else:
