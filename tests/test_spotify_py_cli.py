@@ -156,6 +156,9 @@ def modify_collection_test_(
         extern = False
         if action in {"follow", "save"}:
             extern = True
+
+        item_type = spot.elongate(item_type)
+        
         spot.sp.create_item(
             item_type=item_type,
             item_id=item_id,
@@ -192,7 +195,7 @@ class TestFollow:
         modify_collection_test_(
             action="follow",
             item_name=item_name,
-            item_type="playlist",
+            item_type="pl",
             item_id=item_id,
             ItemClass=Playlist,
             Collection=FollowedPlaylists,

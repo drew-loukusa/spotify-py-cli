@@ -59,7 +59,38 @@ class SpotipyFacade:
             "episode": {"item": Episode, "collection": SavedEpisodes},
             "show": {"item": Show, "collection": SavedShows},
         }
+
+        self.short_types = {
+            "pl": self.types["playlist"],
+            "ar": self.types["artist"],
+            "tr": self.types["track"],
+            "al": self.types["album"],
+            "ep": self.types["episode"],
+            "sh": self.types["show"],
+        }
+
+        # Update types with short types so both can be used
+        self.types.update(self.short_types)
+
+        self.short_to_long_type = {
+            "pl": "playlist",
+            "ar": "artist",
+            "tr": "track",
+            "al": "album",
+            "ep": "episode",
+            "sh": "show",
+        }
+
         self.output = output_object
+
+    def elongate(self, item_type: str):
+        """
+        item_type can be short or long as it is passed to the facade.
+        This method ensures item_type is in the long format.
+        """
+        if len(item_type) == 2 and item_type in self.short_to_long_type:
+            return self.short_to_long_type[item_type]
+        return item_type
 
     def get_item(self, item_type: str, item_id: str) -> Item:
         """
@@ -73,7 +104,7 @@ class SpotipyFacade:
         Returns an ItemCollection given item_type and item_id.
         See self.types for list of supported 'item_type's
         """
-        i_type = self.types[item_type]
+        i_type = self.types[item_type] 
         if "collection" in i_type:
             return i_type["collection"](self.sp)
         else:
