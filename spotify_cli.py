@@ -38,6 +38,19 @@ def callback():
     Run any command without args to get a more detailed help message.
     """
 
+@app.command(no_args_is_help=True)
+def play(
+    item_id:str = typer.Argument(""),
+):
+    """
+    Play a track, using track id 
+    """
+    #print(spot.sp.devices())
+    uris=[f"spotify:track:{item_id}",]   
+    spot.sp.start_playback(
+        device_id="24bd5023abee12d0a8cd992fb02d3af370517bcc",
+        uris=uris)
+
 
 @app.command(no_args_is_help=True)
 def create(
